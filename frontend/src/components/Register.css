@@ -1,0 +1,50 @@
+body {
+  background-color: #001f3f;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+.register-container {
+  width: 400px;
+  margin: 100px auto;
+  padding: 40px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  text-align: center;
+  background: #fafafa;
+  box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+}
+.register-input {
+  width: 90%;
+  padding: 12px;
+  margin: 12px auto;
+  display: block;
+  border: 1px solid #aaa;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+/* Button styling */
+.register-button {
+  padding: 12px;
+  width: 95%;
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 15px;
+  border-radius: 5px;
+}
+.register-button:hover {
+  background: #0056b3;
+}
+.error {
+   color: red;
+   font-size: 14px;
+   margin-bottom: 10px;
+
+ }
+
+
