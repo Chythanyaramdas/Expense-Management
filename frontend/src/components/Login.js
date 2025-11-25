@@ -1,9 +1,9 @@
 import { useState } from "react";
 import axios from "../api/axiosClient";
-import "./Register.css";
+import "./Login.css";
 import { useNavigate } from "react-router-dom";
 
-export default function Register() {
+export default function Login() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -20,34 +20,34 @@ export default function Register() {
     });
   };
 
-  const registerUser = async () => {
+  const loginUser = async () => {
     if (form.username === "" || form.password === "") {
-      setError("Username and password cannot be empty");
+      setError("Username and password are required");
       return;
     }
 
     try {
-      await axios.post("/users/register", form);
+      const response = await axios.post("/users/login", form);
 
-      alert("User registered successfully!");
-      navigate("/login");
+      if (response.data === "Login successful") {
+        alert("Login successful!");
 
-    } catch (error) {
-        if (error.response && error.response.data) {
-          setError(error.response.data);
-        } else {
-          setError("Something went wrong");
-        }
-        console.error(error);
+        // Redirect to dashboard or home
+        navigate("/dashboard");
+      } else {
+        setError("Invalid credentials");
       }
-
+    } catch (error) {
+      setError("Login failed. Try again.");
+      console.error(error);
+    }
   };
 
   return (
-    <div className="register-container">
-      <h2>Register</h2>
+    <div className="login-container">
+      <h2>Login</h2>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="login-error">{error}</p>}
 
       <input
         type="text"
@@ -55,7 +55,7 @@ export default function Register() {
         placeholder="Username"
         value={form.username}
         onChange={handleChange}
-        className="register-input"
+        className="login-input"
       />
 
       <input
@@ -64,13 +64,12 @@ export default function Register() {
         placeholder="Password"
         value={form.password}
         onChange={handleChange}
-        className="register-input"
+        className="login-input"
       />
 
-      <button onClick={registerUser} className="register-button">
-        Register
+      <button onClick={loginUser} className="login-button">
+        Login
       </button>
     </div>
   );
 }
-

@@ -15,6 +15,10 @@ public class UserService {
     UserRepository userRepository;
 
     public User registerUser(User user){
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new RuntimeException("Username already exists");
+        }
+
         return userRepository.save(user);
     }
 

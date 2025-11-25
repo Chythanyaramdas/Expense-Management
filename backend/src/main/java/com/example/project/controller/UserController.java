@@ -1,6 +1,7 @@
 package com.example.project.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.project.model.User;
 import com.example.project.service.UserService;
@@ -16,9 +17,15 @@ public class UserController {
 
 
     @PostMapping("/register")
-    public User register(@RequestBody User user) {
-        return userService.registerUser(user);
+    public ResponseEntity<?> register(@RequestBody User user) {
+        try {
+            User savedUser = userService.registerUser(user);
+            return ResponseEntity.ok(savedUser);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
+
 
     @PostMapping("/login")
     public String login(@RequestBody User user) {
