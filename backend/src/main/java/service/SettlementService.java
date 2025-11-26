@@ -47,7 +47,6 @@ public class SettlementService {
 
         settlementRepository.save(settlement);
 
-        // 2️⃣ Reverse expense
         addReverseExpense(group, payer, receiver, amount);
 
         return settlement;
@@ -57,7 +56,7 @@ public class SettlementService {
 
         Expense expense = new Expense();
         expense.setGroup(group);
-        expense.setTitle("Settlement Payment");
+        expense.setTitle("Settlement Payments");
         expense.setSplitType("EXACT");
         expense.setAmount(amount);
         expense.setPayer(payer);
