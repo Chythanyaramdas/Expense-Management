@@ -1,4 +1,4 @@
-import React from "react";
+
 import "./AuthForm.css";
 
 export default function AuthForm({ title, form, onChange, onSubmit, buttonText }) {
