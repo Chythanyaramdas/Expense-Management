@@ -25,15 +25,16 @@ export default function Login() {
       if (response.data === "Login successful") {
         toast.success("Login successful!");
 
-        // Delay redirect so toast is shown
+        // ✅ Save username to localStorage
+        localStorage.setItem("username", form.username);
+
+        // Redirect to dashboard (no need to pass state)
         setTimeout(() => {
           navigate("/dashboard");
         }, 1200);
-
       } else {
         toast.error("Invalid credentials");
       }
-
     } catch (err) {
       toast.error("Login failed. Try again.");
     }

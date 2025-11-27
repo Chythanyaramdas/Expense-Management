@@ -1,8 +1,14 @@
+.auth-page {
+  background-color: #5683af; /* dark blue */
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .auth-container {
   width: 400px;
-  margin: 100px auto;
   padding: 40px;
-  border: 2px solid #ccc;
   border-radius: 10px;
   text-align: center;
   background: #fafafa;
@@ -22,7 +28,7 @@
 .auth-button {
   padding: 12px;
   width: 95%;
-  background: #007bff;
+  background: #007bff; /* blue for register */
   color: white;
   border: none;
   cursor: pointer;
@@ -33,4 +39,10 @@
 
 .auth-button:hover {
   background: #0056b3;
+}
+
+.auth-error {
+  color: red;
+  font-size: 14px;
+  margin-bottom: 10px;
 }
