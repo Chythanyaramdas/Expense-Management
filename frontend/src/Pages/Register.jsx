@@ -23,8 +23,6 @@ export default function Register() {
       await axios.post("/users/register", form);
 
       toast.success("User registered successfully!");
-
-      // Delay redirect so toast is visible
       setTimeout(() => {
         navigate("/login");
       }, 1200);

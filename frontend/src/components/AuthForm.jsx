@@ -2,7 +2,7 @@ import "./AuthForm.css";
 
 export default function AuthForm({ title, form, onChange, onSubmit, buttonText }) {
   return (
-    <div className="auth-page">  {/* Wrap the form in auth-page */}
+    <div className="auth-page">
       <div className="auth-container">
         <h2>{title}</h2>
 

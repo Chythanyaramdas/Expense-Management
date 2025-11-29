@@ -1,11 +1,13 @@
 package com.example.project.controller;
 
+import com.example.project.exception.UserNotFoundException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.project.model.User;
 import com.example.project.service.UserService;
-
 
 @RestController
 @RequestMapping("/users")
@@ -28,17 +30,80 @@ public class UserController {
 
 
     @PostMapping("/login")
-    public String login(@RequestBody User user) {
+    public ResponseEntity<?> login(@RequestBody User user, HttpServletResponse response) {
         User loggedIn = userService.loginUser(user.getUsername(), user.getPassword());
         if (loggedIn != null) {
-            return "Login successful";
+            Cookie cookie = new Cookie("username", loggedIn.getUsername());
+            cookie.setHttpOnly(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(24 * 60 * 60);
+
+            cookie.setSecure(false);
+            cookie.setDomain("localhost");
+
+            response.addCookie(cookie);
+
+            return ResponseEntity.ok("Login successful");
         } else {
-            return "Invalid credentials";
+            return ResponseEntity.status(401).body("Invalid credentials");
         }
     }
+
     @GetMapping("/{id}")
-    public User getUser(@PathVariable Long id) {
-        return userService.getUser(id).orElse(null);
+    public ResponseEntity<?> getUser(@PathVariable Long id) {
+
+        User user = userService.getUser(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+
+        return ResponseEntity.ok(user);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+        Cookie cookie = new Cookie("username", null);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // delete cookie
+        response.addCookie(cookie);
+        return ResponseEntity.ok("Logged out");
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(
+            @CookieValue(value = "username", defaultValue = "") String username) {
+
+        if (username.isEmpty()) {
+            return ResponseEntity.status(401).body("Not logged in");
+        }
+
+        User foundUser = userService.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        return ResponseEntity.ok(foundUser);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(
+            @PathVariable Long id,
+            @RequestBody User updatedUser,
+            HttpServletResponse response) {
+
+        User savedUser = userService.updateUser(id, updatedUser);
+
+        Cookie cookie = new Cookie("username", savedUser.getUsername());
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(24 * 60 * 60);
+        cookie.setSecure(false);
+        cookie.setDomain("localhost");
+
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok(savedUser);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
 }

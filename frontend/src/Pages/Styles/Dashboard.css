@@ -3,19 +3,19 @@
   min-height: 100vh;
 }
 
-/* Shift main content to the right of sidebar */
+
 .main-content {
   flex-grow: 1;
-  margin-left: 220px;  /* width of sidebar */
+  margin-left: 220px;  
   padding: 40px;
   background: #f9f9f9;
 
-  /* Center content */
+  
   display: flex;
   flex-direction: column;
-  justify-content: center; /* vertical center */
-  align-items: center;     /* horizontal center */
-  text-align: center;      /* center text */
+  justify-content: center; 
+  align-items: center;     
+  text-align: center;      
 }
 
 .main-content h1 {

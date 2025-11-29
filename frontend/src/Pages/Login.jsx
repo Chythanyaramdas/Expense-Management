@@ -20,15 +20,13 @@ export default function Login() {
     }
 
     try {
-      const response = await axios.post("/users/login", form);
+      const response = await axios.post("/users/login", form,{withCredentials:true});
 
       if (response.data === "Login successful") {
         toast.success("Login successful!");
 
-        // ✅ Save username to localStorage
         localStorage.setItem("username", form.username);
-
-        // Redirect to dashboard (no need to pass state)
+      
         setTimeout(() => {
           navigate("/dashboard");
         }, 1200);

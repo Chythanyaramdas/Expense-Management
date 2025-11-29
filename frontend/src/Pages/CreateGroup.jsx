@@ -1,0 +1,76 @@
+import { useEffect, useState } from "react";
+import axios from "../api/axiosClient";
+import PageLayout from "../components/PageLayout";
+import UserDropdownSelect from "../components/UserDropdownSelect";
+import { toast } from "react-toastify";
+import "./Styles/CreateGroup.css";
+
+export default function CreateGroup() {
+  const [name, setName] = useState("");
+  const [users, setUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+
+  const username = localStorage.getItem("username");
+
+  const menuItems = [
+    { label: "Dashboard", path: "/dashboard", icon: "🏠" },
+    { label: "Create Group", path: "/create-group", icon: "➕" },
+    { label: "Groups", path: "/groups", icon: "👥" },
+    { label: "Activity", path: "/activity", icon: "📊" },
+    { label: "Account", path: "/account", icon: "⚙️" },
+    { label: "Logout", path: "/login", icon: "🚪", className: "logout" },
+  ];
+
+  useEffect(() => {
+    axios.get("/users/all")
+      .then((res) => setUsers(res.data))
+      .catch(() => toast.error("Failed to load users"));
+  }, []);
+
+  const toggleUser = (id) => {
+    if (selectedUsers.includes(id)) {
+      setSelectedUsers(selectedUsers.filter((uid) => uid !== id));
+    } else {
+      setSelectedUsers([...selectedUsers, id]);
+    }
+  };
+
+  const createGroup = () => {
+    if (!name.trim()) return toast.warn("Please enter a group name");
+    if (selectedUsers.length === 0) return toast.warn("Select at least one member");
+
+    axios.post("/group/create", { name, userIds: selectedUsers })
+      .then(() => {
+        toast.success("Group created!");
+        setName("");
+        setSelectedUsers([]);
+      })
+      .catch(() => toast.error("Failed to create group"));
+  };
+
+  // ✅ YOU MISSED THIS RETURN!
+  return (
+    <PageLayout username={username} menuItems={menuItems}>
+      <div className="create-group-container">
+        <div className="create-group-card">
+          <h2>Create New Group</h2>
+
+          <label>Group Name</label>
+          <input
+            type="text"
+            className="group-input"
+            placeholder="Enter group name..."
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+
+          <h3>Select Members</h3>
+       <UserDropdownSelect users={users} selected={selectedUsers} onToggle={toggleUser} />
+        <button className="create-btn" onClick={createGroup}>
+            Create Group
+          </button>
+        </div>
+      </div>
+    </PageLayout>
+  );
+}

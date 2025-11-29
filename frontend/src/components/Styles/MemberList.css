@@ -1,0 +1,19 @@
+.member-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  background: white;
+  margin-bottom: 5px;
+  border-radius: 6px;
+}
+.remove-btn {
+  background: crimson;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.remove-btn:hover {
+  background: red;
+}
