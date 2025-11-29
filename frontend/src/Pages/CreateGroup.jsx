@@ -9,8 +9,7 @@ export default function CreateGroup() {
   const [name, setName] = useState("");
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
-
-  const username = localStorage.getItem("username");
+  const [username, setUsername] = useState("");
 
   const menuItems = [
     { label: "Dashboard", path: "/dashboard", icon: "🏠" },
@@ -22,22 +21,23 @@ export default function CreateGroup() {
   ];
 
   useEffect(() => {
+    axios.get("/users/me", { withCredentials: true })
+      .then((res) => setUsername(res.data.username));
+
     axios.get("/users/all")
       .then((res) => setUsers(res.data))
       .catch(() => toast.error("Failed to load users"));
   }, []);
 
   const toggleUser = (id) => {
-    if (selectedUsers.includes(id)) {
-      setSelectedUsers(selectedUsers.filter((uid) => uid !== id));
-    } else {
-      setSelectedUsers([...selectedUsers, id]);
-    }
+    setSelectedUsers((prev) =>
+      prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
+    );
   };
 
   const createGroup = () => {
-    if (!name.trim()) return toast.warn("Please enter a group name");
-    if (selectedUsers.length === 0) return toast.warn("Select at least one member");
+    if (!name.trim()) return toast.warn("Enter a group name");
+    if (selectedUsers.length === 0) return toast.warn("Select members");
 
     axios.post("/group/create", { name, userIds: selectedUsers })
       .then(() => {
@@ -48,7 +48,6 @@ export default function CreateGroup() {
       .catch(() => toast.error("Failed to create group"));
   };
 
-  // ✅ YOU MISSED THIS RETURN!
   return (
     <PageLayout username={username} menuItems={menuItems}>
       <div className="create-group-container">
@@ -65,8 +64,13 @@ export default function CreateGroup() {
           />
 
           <h3>Select Members</h3>
-       <UserDropdownSelect users={users} selected={selectedUsers} onToggle={toggleUser} />
-        <button className="create-btn" onClick={createGroup}>
+          <UserDropdownSelect
+            users={users}
+            selected={selectedUsers}
+            onToggle={toggleUser}
+          />
+
+          <button className="create-btn" onClick={createGroup}>
             Create Group
           </button>
         </div>

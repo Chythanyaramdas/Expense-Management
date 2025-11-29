@@ -7,7 +7,9 @@ export default function PageLayout({ username, menuItems, children }) {
       <Sidebar username={username} menuItems={menuItems} />
 
       <div className="layout-content">
-        {children}
+        <div className="content-wrapper">
+          {children}
+        </div>
       </div>
     </div>
   );

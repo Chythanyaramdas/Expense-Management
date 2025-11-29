@@ -5,9 +5,8 @@ import GroupCard from "../components/GroupCard";
 
 export default function Groups() {
   const [groups, setGroups] = useState([]);
-  const username = localStorage.getItem("username");
+  const [username, setUsername] = useState("");
 
-  // ADD THIS
   const menuItems = [
     { label: "Dashboard", path: "/dashboard", icon: "🏠" },
     { label: "Create Group", path: "/create-group", icon: "➕" },
@@ -18,14 +17,21 @@ export default function Groups() {
   ];
 
   useEffect(() => {
-    axios.get(`/group/user/${localStorage.getItem("userId")}`)
-      .then(res => setGroups(res.data));
+    axios.get("/users/me", { withCredentials: true })
+      .then((res) => {
+        setUsername(res.data.username);
+        return axios.get(`/group/user/${res.data.id}`);
+      })
+      .then((res) => setGroups(res.data))
+      .catch(() => console.log("Failed to load groups"));
   }, []);
 
   return (
     <PageLayout username={username} menuItems={menuItems}>
       <h2>Your Groups</h2>
-      {groups.map(g => <GroupCard key={g.id} group={g} />)}
+      {groups.map((g) => (
+        <GroupCard key={g.id} group={g} />
+      ))}
     </PageLayout>
   );
 }

@@ -5,6 +5,12 @@
 
 .layout-content {
   flex: 1;
-  padding: 20px;
+  padding: 30px;
   background: #f8f9fc;
+}
+
+/* Center all pages content */
+.content-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
 }

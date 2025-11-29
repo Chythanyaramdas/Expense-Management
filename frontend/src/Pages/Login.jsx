@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 
 export default function Login() {
   const navigate = useNavigate();
-
   const [form, setForm] = useState({ username: "", password: "" });
 
   const handleChange = (e) => {
@@ -20,21 +19,15 @@ export default function Login() {
     }
 
     try {
-      const response = await axios.post("/users/login", form,{withCredentials:true});
+      await axios.post("/users/login", form, { withCredentials: true });
 
-      if (response.data === "Login successful") {
-        toast.success("Login successful!");
+      // fetch user after login
+      const res = await axios.get("/users/me", { withCredentials: true });
+      toast.success("Login successful!");
 
-        localStorage.setItem("username", form.username);
-      
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1200);
-      } else {
-        toast.error("Invalid credentials");
-      }
+      navigate("/dashboard");
     } catch (err) {
-      toast.error("Login failed. Try again.");
+      toast.error("Invalid credentials");
     }
   };
 
