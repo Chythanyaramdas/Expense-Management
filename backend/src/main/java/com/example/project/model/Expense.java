@@ -12,98 +12,66 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable=false)
+    @Column(nullable = false)
     private String title;
 
-    @Column(nullable=false)
+    @Column(nullable = false)
     private Double amount;
 
     @Column(nullable = false)
     private String splitType;
 
+    /* ---------------------- PARTICIPANTS ---------------------- */
     @ManyToMany
     @JoinTable(
             name = "expense_participants",
-            joinColumns = @JoinColumn(name="expense_id"),
-            inverseJoinColumns = @JoinColumn(name="user_id")
+            joinColumns = @JoinColumn(name = "expense_id"),
+            inverseJoinColumns = @JoinColumn(name = "participant_id")
     )
     private List<User> participants;
 
+    /* ---------------------- USER SHARES MAP ---------------------- */
     @ElementCollection
-    @CollectionTable(name = "expense_shares", joinColumns = @JoinColumn(name = "expense_id"))
-    @MapKeyColumn(name = "user_id")
-    @Column(name = "share")
+    @CollectionTable(
+            name = "expense_shares",
+            joinColumns = @JoinColumn(name = "expense_id")
+    )
+    @MapKeyColumn(name = "share_user_id")     // COLUMN IN ORACLE
+    @Column(name = "share_amount")            // COLUMN IN ORACLE
     private Map<Long, Double> userShares;
 
+    /* ---------------------- GROUP ---------------------- */
     @ManyToOne
     @JoinColumn(name = "group_id")
     private Group group;
 
+    /* ---------------------- PAYER ---------------------- */
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "payer_id")
     private User payer;
 
-    public Long getId() {
-        return id;
-    }
+    /* ---------------------- GETTERS/SETTERS ---------------------- */
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public String getTitle() {
-        return title;
-    }
+    public Double getAmount() { return amount; }
+    public void setAmount(Double amount) { this.amount = amount; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public String getSplitType() { return splitType; }
+    public void setSplitType(String splitType) { this.splitType = splitType; }
 
-    public Double getAmount() {
-        return amount;
-    }
+    public List<User> getParticipants() { return participants; }
+    public void setParticipants(List<User> participants) { this.participants = participants; }
 
-    public void setAmount(Double amount) {
-        this.amount = amount;
-    }
+    public Map<Long, Double> getUserShares() { return userShares; }
+    public void setUserShares(Map<Long, Double> userShares) { this.userShares = userShares; }
 
-    public String getSplitType() {
-        return splitType;
-    }
+    public Group getGroup() { return group; }
+    public void setGroup(Group group) { this.group = group; }
 
-    public void setSplitType(String splitType) {
-        this.splitType = splitType;
-    }
-
-    public List<User> getParticipants() {
-        return participants;
-    }
-
-    public void setParticipants(List<User> participants) {
-        this.participants = participants;
-    }
-
-    public Map<Long, Double> getUserShares() {
-        return userShares;
-    }
-
-    public void setUserShares(Map<Long, Double> userShares) {
-        this.userShares = userShares;
-    }
-
-    public Group getGroup() {
-        return group;
-    }
-
-    public void setGroup(Group group) {
-        this.group = group;
-    }
-
-    public User getPayer() {
-        return payer;
-    }
-
-    public void setPayer(User payer) {
-        this.payer = payer;
-    }
+    public User getPayer() { return payer; }
+    public void setPayer(User payer) { this.payer = payer; }
 }

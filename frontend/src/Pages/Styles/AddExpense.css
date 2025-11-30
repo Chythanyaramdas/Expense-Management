@@ -1,0 +1,29 @@
+.add-expense-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 10px 0;
+}
+
+.add-expense-card input,
+.add-expense-card select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+
+.add-expense-card h3 {
+  margin-bottom: 4px;
+}
+
+.add-expense-card .exact-shares div {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.add-expense-card .primary-btn {
+  margin-top: 10px;
+}

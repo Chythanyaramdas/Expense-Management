@@ -31,12 +31,13 @@ public class ExpenseService {
     @Autowired
     UserRepository userRepository;
 
-    public Expense addExpense(Long groupId, String title, Double totalAmount, Long paidById,
-                              String splitType, List<Long> participantIds, Map<Long, Double> exactShares) {
+    public Expense addExpense(Long groupId, String title, Double totalAmount,
+                              Long paidById, String splitType,
+                              List<Long> participantIds,
+                              Map<Long, Double> exactShares) {
 
         Group group = groupRepository.findById(groupId).orElseThrow();
         User paidBy = userRepository.findById(paidById).orElseThrow();
-
         List<User> participants = userRepository.findAllById(participantIds);
 
         Expense expense = new Expense();
@@ -47,18 +48,43 @@ public class ExpenseService {
         expense.setParticipants(participants);
         expense.setSplitType(splitType.toUpperCase());
 
+        Map<Long, Double> userShares = new HashMap<>();
+
+        // ========== SPLIT TYPE: EQUAL ==========
         if ("EQUAL".equalsIgnoreCase(splitType)) {
+
             double share = totalAmount / participants.size();
-            Map<Long, Double> shares = participants.stream()
-                    .collect(Collectors.toMap(User::getId, u -> share));
-            expense.setUserShares(shares);
-        } else if ("EXACT".equalsIgnoreCase(splitType)) {
-            expense.setUserShares(exactShares);
+
+            for (User u : participants) {
+                userShares.put(u.getId(), share);
+            }
         }
+
+        // ========== SPLIT TYPE: EXACT ==========
+        else if ("EXACT".equalsIgnoreCase(splitType)) {
+
+            if (exactShares == null || exactShares.isEmpty()) {
+                throw new IllegalArgumentException("Exact shares required for EXACT split");
+            }
+
+            double sum = exactShares.values().stream().mapToDouble(d -> d).sum();
+
+            if (Math.abs(sum - totalAmount) > 0.01) {
+                throw new IllegalArgumentException("Exact shares do not add up to total amount");
+            }
+
+            userShares.putAll(exactShares);
+        }
+
+        // ========== INVALID SPLIT TYPE ==========
+        else {
+            throw new IllegalArgumentException("Invalid split type. Use EQUAL or EXACT.");
+        }
+
+        expense.setUserShares(userShares);
 
         return expenseRepository.save(expense);
     }
-
     public List<Expense> getExpensesByGroup(Long groupId) {
         return expenseRepository.findAllByGroupId(groupId);
     }

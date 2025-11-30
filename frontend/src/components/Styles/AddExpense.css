@@ -1,0 +1,72 @@
+/* ---------------- ADD EXPENSE MAIN FORM ---------------- */
+
+.add-expense-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 15px;
+}
+
+.add-expense-form input,
+.add-expense-form select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+}
+
+/* ---------------- SPLIT OPTIONS ---------------- */
+
+.split-options {
+  display: flex;
+  gap: 20px;
+}
+
+.exact-share-box div {
+  display: flex;
+  justify-content: space-between;
+  margin: 6px 0;
+}
+
+/* ---------------- PARTICIPANTS SELECTOR ---------------- */
+
+.participant-box {
+  margin: 10px 0;
+}
+
+.participant-dropdown {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.participant-chips {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  gap: 8px;
+}
+
+.chip {
+  padding: 6px 12px;
+  background: #e1e9ff;
+  border-radius: 20px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip-remove {
+  cursor: pointer;
+  background: #d9534f;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 18px;
+}

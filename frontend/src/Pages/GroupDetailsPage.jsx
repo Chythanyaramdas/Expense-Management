@@ -4,16 +4,20 @@ import axios from "../api/axiosClient";
 import PageLayout from "../components/PageLayout";
 import MemberList from "../components/MemberList";
 import BalanceList from "../components/BalanceList";
+import AddExpense from "../components/AddExpense";
 import { toast } from "react-toastify";
 import "./Styles/GroupDetails.css";
 
-export default function GroupDetails() {
+export default function GroupDetailsPage() {
   const { groupId } = useParams();
+
   const [group, setGroup] = useState(null);
   const [allUsers, setAllUsers] = useState([]);
   const [newMemberId, setNewMemberId] = useState("");
   const [username, setUsername] = useState("");
   const [showMembers, setShowMembers] = useState(false);
+  const [balances, setBalances] = useState({});
+  const [showAddExpense, setShowAddExpense] = useState(false);
 
   const menuItems = [
     { label: "Dashboard", path: "/dashboard", icon: "🏠" },
@@ -21,8 +25,10 @@ export default function GroupDetails() {
     { label: "Groups", path: "/groups", icon: "👥" },
     { label: "Activity", path: "/activity", icon: "📊" },
     { label: "Account", path: "/account", icon: "⚙️" },
-    { label: "Logout", path: "/login", icon: "🚪", className: "logout" },
+    { label: "Logout", path: "/login", icon: "🚪", className: "logout" }
   ];
+
+  /* ---------------- API CALLS ---------------- */
 
   const loadGroup = () => {
     axios.get(`/group/${groupId}`)
@@ -36,6 +42,12 @@ export default function GroupDetails() {
       .catch(() => toast.error("Failed to load users"));
   };
 
+  const loadBalances = () => {
+    axios.get(`/expense/balances/${groupId}`)
+      .then(res => setBalances(res.data))
+      .catch(() => toast.error("Failed to load balances"));
+  };
+
   useEffect(() => {
     axios.get("/users/me", { withCredentials: true })
       .then(res => setUsername(res.data.username))
@@ -43,13 +55,17 @@ export default function GroupDetails() {
 
     loadGroup();
     loadUsers();
+    loadBalances();
   }, []);
+
+  /* --------------- MEMBER ACTIONS --------------- */
 
   const removeMember = (userId) => {
     axios.delete(`/group/${groupId}/removeUser/${userId}`)
       .then(() => {
         toast.success("Member removed");
         loadGroup();
+        loadBalances();
       })
       .catch(() => toast.error("Error removing member"));
   };
@@ -62,9 +78,12 @@ export default function GroupDetails() {
         toast.success("Member added");
         setNewMemberId("");
         loadGroup();
+        loadBalances();
       })
       .catch(() => toast.error("Error adding member"));
   };
+
+  /* -------------------- RENDER -------------------- */
 
   return (
     <PageLayout username={username} menuItems={menuItems}>
@@ -77,9 +96,12 @@ export default function GroupDetails() {
             {/* GROUP NAME */}
             <h1 className="group-title">{group.name}</h1>
 
-            {/* PARTICIPANTS COLLAPSIBLE */}
+            {/* PARTICIPANTS SECTION */}
             <div className="card">
-              <div className="card-header" onClick={() => setShowMembers(!showMembers)}>
+              <div
+                className="card-header"
+                onClick={() => setShowMembers(!showMembers)}
+              >
                 <span>👥 View Participants</span>
                 <span>{showMembers ? "▲" : "▼"}</span>
               </div>
@@ -91,7 +113,7 @@ export default function GroupDetails() {
               )}
             </div>
 
-            {/* ADD MEMBER BOX */}
+            {/* ADD MEMBER */}
             <div className="card add-box">
               <h3>Add Member</h3>
 
@@ -101,8 +123,8 @@ export default function GroupDetails() {
               >
                 <option value="">Select user</option>
                 {allUsers
-                  .filter((u) => !group.members.some((m) => m.id === u.id))
-                  .map((user) => (
+                  .filter(u => !group.members.some(m => m.id === u.id))
+                  .map(user => (
                     <option key={user.id} value={user.id}>
                       {user.username}
                     </option>
@@ -114,11 +136,36 @@ export default function GroupDetails() {
               </button>
             </div>
 
-            {/* BALANCES */}
+            {/* ADD EXPENSE BUTTON / FORM */}
             <div className="card">
-              <h3>Balances</h3>
-              <BalanceList balances={group.balances} />
+              {!showAddExpense ? (
+                <button
+                  className="primary-btn"
+                  onClick={() => setShowAddExpense(true)}
+                >
+                  + Add Expense
+                </button>
+              ) : (
+                <AddExpense
+                  groupId={groupId}
+                  onAdded={() => {
+                    loadBalances();
+                    setShowAddExpense(false);
+                  }}
+                  onClose={() => setShowAddExpense(false)}
+                />
+              )}
             </div>
+
+            {/* BALANCES */}
+          {/* BALANCES */}
+  <div className="card">
+  <h3>Group Balances</h3>
+  <BalanceList 
+    balances={balances} 
+    members={group?.members || []}
+    />
+</div>
           </>
         )}
       </div>
