@@ -112,7 +112,20 @@ public class ExpenseService {
 
     public List<String> calculateSettlements(Long groupId) {
 
+        List<Expense> expenses = expenseRepository.findAllByGroupId(groupId);
+
+        // 1️⃣ Get balances
         Map<Long, Double> balances = calculateGroupBalances(groupId);
+
+        // 2️⃣ Build user lookup map with ALL group members
+        Group group = groupRepository.findById(groupId).orElseThrow();
+        Map<Long, User> userMap = new HashMap<>();
+
+        for (User u : group.getUsers()) {
+            userMap.put(u.getId(), u);
+        }
+
+        // 3️⃣ Split creditors and debtors
         List<Map.Entry<Long, Double>> creditors = balances.entrySet()
                 .stream()
                 .filter(e -> e.getValue() > 0)
@@ -126,28 +139,31 @@ public class ExpenseService {
                 .collect(Collectors.toList());
 
         List<String> settlements = new ArrayList<>();
-
         int i = 0, j = 0;
 
+        // 4️⃣ Create settlement messages using USERNAME
         while (i < creditors.size() && j < debtors.size()) {
 
             Long creditorId = creditors.get(i).getKey();
             Long debtorId = debtors.get(j).getKey();
 
-            double credit = creditors.get(i).getValue();
-            double debit = -debtors.get(j).getValue();
+            String creditorName = userMap.get(creditorId).getUsername();
+            String debtorName  = userMap.get(debtorId).getUsername();
 
-            double settled = Math.min(credit, debit);
+            double credit = creditors.get(i).getValue();
+            double debit  = -debtors.get(j).getValue();
+
+            double settleAmount = Math.min(credit, debit);
 
             settlements.add(
-                    "User " + debtorId + " owes User " + creditorId + " ₹" + settled
+                    debtorName + " owes " + creditorName + " ₹" + settleAmount
             );
 
-            creditors.get(i).setValue(credit - settled);
-            debtors.get(j).setValue(-(debit - settled));
+            creditors.get(i).setValue(credit - settleAmount);
+            debtors.get(j).setValue(-(debit - settleAmount));
 
-            if (credit - settled == 0) i++;
-            if (debit - settled == 0) j++;
+            if (credit - settleAmount == 0) i++;
+            if (debit - settleAmount == 0) j++;
         }
 
         return settlements;

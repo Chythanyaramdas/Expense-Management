@@ -17,6 +17,7 @@ export default function GroupDetailsPage() {
   const [username, setUsername] = useState("");
   const [showMembers, setShowMembers] = useState(false);
   const [balances, setBalances] = useState({});
+  const [settlements, setSettlements] = useState([]);   // ✅ NEW
   const [showAddExpense, setShowAddExpense] = useState(false);
 
   const menuItems = [
@@ -48,6 +49,13 @@ export default function GroupDetailsPage() {
       .catch(() => toast.error("Failed to load balances"));
   };
 
+  // ✅ NEW — LOAD SETTLEMENTS
+  const loadSettlements = () => {
+    axios.get(`/expense/settlements/${groupId}`)
+      .then(res => setSettlements(res.data))
+      .catch(() => toast.error("Failed to load settlements"));
+  };
+
   useEffect(() => {
     axios.get("/users/me", { withCredentials: true })
       .then(res => setUsername(res.data.username))
@@ -56,6 +64,7 @@ export default function GroupDetailsPage() {
     loadGroup();
     loadUsers();
     loadBalances();
+    loadSettlements();   // ✅ CALL ADDED
   }, []);
 
   /* --------------- MEMBER ACTIONS --------------- */
@@ -66,6 +75,7 @@ export default function GroupDetailsPage() {
         toast.success("Member removed");
         loadGroup();
         loadBalances();
+        loadSettlements(); // refresh settlements too
       })
       .catch(() => toast.error("Error removing member"));
   };
@@ -79,6 +89,7 @@ export default function GroupDetailsPage() {
         setNewMemberId("");
         loadGroup();
         loadBalances();
+        loadSettlements();
       })
       .catch(() => toast.error("Error adding member"));
   };
@@ -96,12 +107,9 @@ export default function GroupDetailsPage() {
             {/* GROUP NAME */}
             <h1 className="group-title">{group.name}</h1>
 
-            {/* PARTICIPANTS SECTION */}
+            {/* PARTICIPANTS */}
             <div className="card">
-              <div
-                className="card-header"
-                onClick={() => setShowMembers(!showMembers)}
-              >
+              <div className="card-header" onClick={() => setShowMembers(!showMembers)}>
                 <span>👥 View Participants</span>
                 <span>{showMembers ? "▲" : "▼"}</span>
               </div>
@@ -132,17 +140,14 @@ export default function GroupDetailsPage() {
               </select>
 
               <button onClick={addMember} className="primary-btn">
-                Add Member
+               + Add Member
               </button>
             </div>
 
-            {/* ADD EXPENSE BUTTON / FORM */}
+            {/* ADD EXPENSE */}
             <div className="card">
               {!showAddExpense ? (
-                <button
-                  className="primary-btn"
-                  onClick={() => setShowAddExpense(true)}
-                >
+                <button className="primary-btn" onClick={() => setShowAddExpense(true)}>
                   + Add Expense
                 </button>
               ) : (
@@ -150,6 +155,7 @@ export default function GroupDetailsPage() {
                   groupId={groupId}
                   onAdded={() => {
                     loadBalances();
+                    loadSettlements(); // refresh
                     setShowAddExpense(false);
                   }}
                   onClose={() => setShowAddExpense(false)}
@@ -158,14 +164,26 @@ export default function GroupDetailsPage() {
             </div>
 
             {/* BALANCES */}
-          {/* BALANCES */}
-  <div className="card">
-  <h3>Group Balances</h3>
-  <BalanceList 
-    balances={balances} 
-    members={group?.members || []}
-    />
-</div>
+            <div className="card">
+              <h3>Group Balances</h3>
+              <BalanceList balances={balances} members={group?.members || []} />
+            </div>
+
+            {/* ✅ WHO OWES WHOM */}
+            <div className="card">
+              <h3>Who Owes Whom</h3>
+
+              {settlements.length === 0 ? (
+                <p>No pending settlements 🎉</p>
+              ) : (
+                settlements.map((line, index) => (
+                  <div key={index} className="settlement-row">
+                    {line}
+                  </div>
+                ))
+              )}
+            </div>
+
           </>
         )}
       </div>
