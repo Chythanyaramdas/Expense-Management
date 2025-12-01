@@ -1,13 +1,16 @@
 package service;
 
-import model.Expense;
-import model.Group;
-import model.User;
+
+import com.example.project.model.Expense;
+import com.example.project.model.Group;
+import com.example.project.model.User;
+
+import com.example.project.repository.ExpenseRepository;
+import com.example.project.repository.GroupRepository;
+import com.example.project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import repository.ExpenseRepository;
-import repository.GroupRepository;
-import repository.UserRepository;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -5,7 +5,7 @@ import Dashboard from "./Pages/Dashboard";
 import Account from "./Pages/Account";
 import CreateGroup from"./Pages/CreateGroup";
 import Groups  from "./Pages/Group";
-import GroupDetails from "./Pages/GroupDetailsPage";
+import GroupDetailsPage from "./Pages/GroupDetailsPage";
 import Login from "./Pages/Login";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -31,7 +31,7 @@ function App() {
       <Route path="/account" element={<Account/>}/>
       <Route path="/create-group" element={<CreateGroup />} />   
       <Route path="/groups" element={<Groups />} />
-      <Route path="/group/:groupId" element={<GroupDetails />} />
+      <Route path="/group/:groupId" element={<GroupDetailsPage />} />
       </Routes>
     </BrowserRouter>
   );

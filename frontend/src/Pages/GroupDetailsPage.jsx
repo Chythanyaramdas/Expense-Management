@@ -17,7 +17,7 @@ export default function GroupDetailsPage() {
   const [username, setUsername] = useState("");
   const [showMembers, setShowMembers] = useState(false);
   const [balances, setBalances] = useState({});
-  const [settlements, setSettlements] = useState([]);   // ✅ NEW
+  const [settlements, setSettlements] = useState([]);
   const [showAddExpense, setShowAddExpense] = useState(false);
 
   const menuItems = [
@@ -30,7 +30,6 @@ export default function GroupDetailsPage() {
   ];
 
   /* ---------------- API CALLS ---------------- */
-
   const loadGroup = () => {
     axios.get(`/group/${groupId}`)
       .then(res => setGroup(res.data))
@@ -49,7 +48,6 @@ export default function GroupDetailsPage() {
       .catch(() => toast.error("Failed to load balances"));
   };
 
-  // ✅ NEW — LOAD SETTLEMENTS
   const loadSettlements = () => {
     axios.get(`/expense/settlements/${groupId}`)
       .then(res => setSettlements(res.data))
@@ -64,18 +62,17 @@ export default function GroupDetailsPage() {
     loadGroup();
     loadUsers();
     loadBalances();
-    loadSettlements();   // ✅ CALL ADDED
+    loadSettlements();
   }, []);
 
   /* --------------- MEMBER ACTIONS --------------- */
-
   const removeMember = (userId) => {
     axios.delete(`/group/${groupId}/removeUser/${userId}`)
       .then(() => {
         toast.success("Member removed");
         loadGroup();
         loadBalances();
-        loadSettlements(); // refresh settlements too
+        loadSettlements();
       })
       .catch(() => toast.error("Error removing member"));
   };
@@ -94,8 +91,18 @@ export default function GroupDetailsPage() {
       .catch(() => toast.error("Error adding member"));
   };
 
-  /* -------------------- RENDER -------------------- */
+  /* --------------- SETTLE ACTION --------------- */
+  const settleUp = (payerId, receiverId, amount) => {
+    axios.post("/settle", { groupId, payerId, receiverId, amount })
+      .then(() => {
+        toast.success("Settlement done");
+        loadBalances();
+        loadSettlements();
+      })
+      .catch(() => toast.error("Error settling payment"));
+  };
 
+  /* -------------------- RENDER -------------------- */
   return (
     <PageLayout username={username} menuItems={menuItems}>
       <div className="group-details-wrapper">
@@ -113,7 +120,6 @@ export default function GroupDetailsPage() {
                 <span>👥 View Participants</span>
                 <span>{showMembers ? "▲" : "▼"}</span>
               </div>
-
               {showMembers && (
                 <div className="card-body">
                   <MemberList members={group.members} onRemove={removeMember} />
@@ -124,40 +130,22 @@ export default function GroupDetailsPage() {
             {/* ADD MEMBER */}
             <div className="card add-box">
               <h3>Add Member</h3>
-
-              <select
-                value={newMemberId}
-                onChange={(e) => setNewMemberId(e.target.value)}
-              >
+              <select value={newMemberId} onChange={e => setNewMemberId(e.target.value)}>
                 <option value="">Select user</option>
-                {allUsers
-                  .filter(u => !group.members.some(m => m.id === u.id))
-                  .map(user => (
-                    <option key={user.id} value={user.id}>
-                      {user.username}
-                    </option>
-                  ))}
+                {allUsers.filter(u => !group.members.some(m => m.id === u.id))
+                  .map(user => <option key={user.id} value={user.id}>{user.username}</option>)}
               </select>
-
-              <button onClick={addMember} className="primary-btn">
-               + Add Member
-              </button>
+              <button onClick={addMember} className="primary-btn">+ Add Member</button>
             </div>
 
             {/* ADD EXPENSE */}
             <div className="card">
               {!showAddExpense ? (
-                <button className="primary-btn" onClick={() => setShowAddExpense(true)}>
-                  + Add Expense
-                </button>
+                <button className="primary-btn" onClick={() => setShowAddExpense(true)}>+ Add Expense</button>
               ) : (
                 <AddExpense
                   groupId={groupId}
-                  onAdded={() => {
-                    loadBalances();
-                    loadSettlements(); // refresh
-                    setShowAddExpense(false);
-                  }}
+                  onAdded={() => { loadBalances(); loadSettlements(); setShowAddExpense(false); }}
                   onClose={() => setShowAddExpense(false)}
                 />
               )}
@@ -166,23 +154,33 @@ export default function GroupDetailsPage() {
             {/* BALANCES */}
             <div className="card">
               <h3>Group Balances</h3>
-              <BalanceList balances={balances} members={group?.members || []} />
+              <BalanceList balances={balances} members={group.members} />
             </div>
 
-            {/* ✅ WHO OWES WHOM */}
-            <div className="card">
-              <h3>Who Owes Whom</h3>
+            {/* WHO OWES WHOM */}
+            {/* WHO OWES WHOM */}
+    <div className="card">
+    <h3>Who Owes Whom</h3>
 
-              {settlements.length === 0 ? (
-                <p>No pending settlements 🎉</p>
-              ) : (
-                settlements.map((line, index) => (
-                  <div key={index} className="settlement-row">
-                    {line}
-                  </div>
-                ))
-              )}
-            </div>
+  {settlements.length === 0 ? (
+    <p>No pending settlements 🎉</p>
+  ) : (
+    settlements.map(s => (
+      <div key={`${s.payerId}-${s.receiverId}`} className="settlement-row">
+        {s.payerName} owes {s.receiverName} ₹{s.amount}
+
+        {s.amount > 0 && (
+          <button
+            className="settle-btn"
+            onClick={() => settleUp(s.payerId, s.receiverId, s.amount)}
+          >
+            Settle Up
+          </button>
+        )}
+      </div>
+    ))
+  )}
+</div>
 
           </>
         )}
@@ -190,3 +188,4 @@ export default function GroupDetailsPage() {
     </PageLayout>
   );
 }
+

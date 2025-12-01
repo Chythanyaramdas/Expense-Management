@@ -1,6 +1,8 @@
 package com.example.project.service;
 
 
+
+import com.example.project.dto.SettlementResult;
 import com.example.project.model.Expense;
 
 import com.example.project.model.Group;
@@ -110,17 +112,16 @@ public class ExpenseService {
         return balances;
     }
 
-    public List<String> calculateSettlements(Long groupId) {
+    public List<SettlementResult> calculateSettlements(Long groupId) {
 
         List<Expense> expenses = expenseRepository.findAllByGroupId(groupId);
 
-        // 1️⃣ Get balances
+        // 1️⃣ Calculate balances
         Map<Long, Double> balances = calculateGroupBalances(groupId);
 
-        // 2️⃣ Build user lookup map with ALL group members
+        // 2️⃣ Build user lookup
         Group group = groupRepository.findById(groupId).orElseThrow();
         Map<Long, User> userMap = new HashMap<>();
-
         for (User u : group.getUsers()) {
             userMap.put(u.getId(), u);
         }
@@ -138,25 +139,27 @@ public class ExpenseService {
                 .sorted((a, b) -> Double.compare(a.getValue(), b.getValue()))
                 .collect(Collectors.toList());
 
-        List<String> settlements = new ArrayList<>();
+        List<SettlementResult> settlements = new ArrayList<>();
         int i = 0, j = 0;
 
-        // 4️⃣ Create settlement messages using USERNAME
+        // 4️⃣ Create structured settlement objects
         while (i < creditors.size() && j < debtors.size()) {
-
             Long creditorId = creditors.get(i).getKey();
             Long debtorId = debtors.get(j).getKey();
 
-            String creditorName = userMap.get(creditorId).getUsername();
-            String debtorName  = userMap.get(debtorId).getUsername();
-
             double credit = creditors.get(i).getValue();
-            double debit  = -debtors.get(j).getValue();
+            double debit = -debtors.get(j).getValue();
 
             double settleAmount = Math.min(credit, debit);
 
             settlements.add(
-                    debtorName + " owes " + creditorName + " ₹" + settleAmount
+                    new SettlementResult(
+                            debtorId,
+                            userMap.get(debtorId).getUsername(),
+                            creditorId,
+                            userMap.get(creditorId).getUsername(),
+                            settleAmount
+                    )
             );
 
             creditors.get(i).setValue(credit - settleAmount);

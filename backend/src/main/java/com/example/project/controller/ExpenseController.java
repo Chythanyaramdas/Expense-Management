@@ -1,7 +1,10 @@
 package com.example.project.controller;
+import com.example.project.dto.ExpenseRequest;
+import com.example.project.dto.SettlementRequest;
+import com.example.project.dto.SettlementResult;
 import com.example.project.model.Expense;
 import com.example.project.service.ExpenseService;
-import dto.ExpenseRquest;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +21,7 @@ public class ExpenseController {
     private ExpenseService expenseService;
 
     @PostMapping("/add")
-    public Expense addExpense(@RequestBody ExpenseRquest request) {
+    public Expense addExpense(@RequestBody ExpenseRequest request) {
         return expenseService.addExpense(
                 request.getGroupId(),
                 request.getTitle(),
@@ -41,8 +44,7 @@ public class ExpenseController {
     }
 
     @GetMapping("/settlements/{groupId}")
-    public List<String> getSettlements(@PathVariable Long groupId) {
+    public List<SettlementResult> getSettlements(@PathVariable Long groupId) {
         return expenseService.calculateSettlements(groupId);
     }
-
 }
