@@ -42,18 +42,21 @@ public class SettlementService {
         User receiver = userRepository.findById(receiverId).orElseThrow();
         Group group = groupRepository.findById(groupId).orElseThrow();
 
+        // Create settlement entry
         Settlement s = new Settlement();
         s.setPayer(payer);
         s.setReceiver(receiver);
         s.setAmount(amount);
         s.setGroup(group);
         s.setCreatedAt(LocalDateTime.now());
-        s.setNote("Manual settlement");
 
-        // persist settlement (audit trail)
+        // Create human-readable message
+        String message = payer.getUsername() + " paid " + receiver.getUsername() + " ₹" + amount;
+        s.setNote(message);
+
         settlementRepository.save(s);
 
-        // Add a reverse expense to offset the original debt
+        // Add reverse expense for balance adjustment
         addReverseExpense(group, payer, receiver, amount);
 
         return s;
@@ -67,7 +70,6 @@ public class SettlementService {
         expense.setAmount(amount);
         expense.setPayer(payer);
 
-        // This creates an expense that "pays" the receiver
         expense.setParticipants(List.of(receiver));
         expense.setUserShares(Map.of(receiver.getId(), amount));
 

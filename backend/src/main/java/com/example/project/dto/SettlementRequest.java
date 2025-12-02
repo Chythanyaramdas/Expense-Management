@@ -6,6 +6,7 @@ public class SettlementRequest {
     private Long payerId;
     private Long receiverId;
     private Double amount;
+    private String note;
 
     public SettlementRequest() {}
 
@@ -18,6 +19,8 @@ public class SettlementRequest {
     public void setPayerId(Long payerId) { this.payerId = payerId; }
     public void setReceiverId(Long receiverId) { this.receiverId = receiverId; }
     public void setAmount(Double amount) { this.amount = amount; }
+    public String getNote() {return note;}
+    public void setNote(String note) {this.note = note;}
 }
 
 

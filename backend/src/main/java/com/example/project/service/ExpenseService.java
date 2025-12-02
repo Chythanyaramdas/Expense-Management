@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -91,16 +93,22 @@ public class ExpenseService {
         return expenseRepository.findAllByGroupId(groupId);
     }
 
+
     public Map<Long, Double> calculateGroupBalances(Long groupId) {
 
         List<Expense> expenses = expenseRepository.findAllByGroupId(groupId);
+        // Use Double for the balances map to comply with the required return type
         Map<Long, Double> balances = new HashMap<>();
 
         for (Expense expense : expenses) {
             Long payerId = expense.getPayer().getId();
             Double amount = expense.getAmount();
+
+            // 1. Accumulate Payer's positive balance (Paid money)
             balances.put(payerId, balances.getOrDefault(payerId, 0.0) + amount);
 
+            // 2. Iterate over shares to deduct what is owed (Negative balance)
+            // We must assume expense.getUserShares() returns Map<Long, Double> based on errors
             for (Map.Entry<Long, Double> entry : expense.getUserShares().entrySet()) {
                 Long userId = entry.getKey();
                 Double share = entry.getValue();
@@ -109,7 +117,24 @@ public class ExpenseService {
             }
         }
 
-        return balances;
+        // 3. Mitigation Step: Round all final balances to eliminate floating-point errors
+        Map<Long, Double> finalBalances = new HashMap<>();
+
+        for (Map.Entry<Long, Double> entry : balances.entrySet()) {
+            Long userId = entry.getKey();
+            Double balance = entry.getValue();
+
+            // Use BigDecimal for the rounding operation to ensure accuracy in rounding
+            BigDecimal bd = new BigDecimal(balance);
+
+            // Round to 2 decimal places (standard for currency) using commercial rounding
+            bd = bd.setScale(2, RoundingMode.HALF_UP);
+
+            // Convert the clean, rounded value back to Double
+            finalBalances.put(userId, bd.doubleValue());
+        }
+
+        return finalBalances;
     }
 
     public List<SettlementResult> calculateSettlements(Long groupId) {
@@ -152,13 +177,18 @@ public class ExpenseService {
 
             double settleAmount = Math.min(credit, debit);
 
+            String note = userMap.get(debtorId).getUsername() +
+                    " owes " + userMap.get(creditorId).getUsername() +
+                    " ₹" + settleAmount;
+
             settlements.add(
                     new SettlementResult(
                             debtorId,
                             userMap.get(debtorId).getUsername(),
                             creditorId,
                             userMap.get(creditorId).getUsername(),
-                            settleAmount
+                            settleAmount,
+                            note
                     )
             );
 

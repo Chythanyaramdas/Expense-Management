@@ -7,10 +7,10 @@ import BalanceList from "../components/BalanceList";
 import AddExpense from "../components/AddExpense";
 import { toast } from "react-toastify";
 import "./Styles/GroupDetails.css";
-
+ 
 export default function GroupDetailsPage() {
   const { groupId } = useParams();
-
+ 
   const [group, setGroup] = useState(null);
   const [allUsers, setAllUsers] = useState([]);
   const [newMemberId, setNewMemberId] = useState("");
@@ -19,7 +19,12 @@ export default function GroupDetailsPage() {
   const [balances, setBalances] = useState({});
   const [settlements, setSettlements] = useState([]);
   const [showAddExpense, setShowAddExpense] = useState(false);
-
+ 
+  // NEW STATES for partial settlement
+  const [showSettleBox, setShowSettleBox] = useState(false);
+  const [selectedSettlement, setSelectedSettlement] = useState(null);
+  const [partialAmount, setPartialAmount] = useState("");
+ 
   const menuItems = [
     { label: "Dashboard", path: "/dashboard", icon: "🏠" },
     { label: "Create Group", path: "/create-group", icon: "➕" },
@@ -28,43 +33,43 @@ export default function GroupDetailsPage() {
     { label: "Account", path: "/account", icon: "⚙️" },
     { label: "Logout", path: "/login", icon: "🚪", className: "logout" }
   ];
-
+ 
   /* ---------------- API CALLS ---------------- */
   const loadGroup = () => {
     axios.get(`/group/${groupId}`)
       .then(res => setGroup(res.data))
       .catch(() => toast.error("Failed to load group"));
   };
-
+ 
   const loadUsers = () => {
     axios.get("/users/all")
       .then(res => setAllUsers(res.data))
       .catch(() => toast.error("Failed to load users"));
   };
-
+ 
   const loadBalances = () => {
     axios.get(`/expense/balances/${groupId}`)
       .then(res => setBalances(res.data))
       .catch(() => toast.error("Failed to load balances"));
   };
-
+ 
   const loadSettlements = () => {
     axios.get(`/expense/settlements/${groupId}`)
       .then(res => setSettlements(res.data))
       .catch(() => toast.error("Failed to load settlements"));
   };
-
+ 
   useEffect(() => {
     axios.get("/users/me", { withCredentials: true })
       .then(res => setUsername(res.data.username))
       .catch(() => setUsername("User"));
-
+ 
     loadGroup();
     loadUsers();
     loadBalances();
     loadSettlements();
   }, []);
-
+ 
   /* --------------- MEMBER ACTIONS --------------- */
   const removeMember = (userId) => {
     axios.delete(`/group/${groupId}/removeUser/${userId}`)
@@ -76,10 +81,10 @@ export default function GroupDetailsPage() {
       })
       .catch(() => toast.error("Error removing member"));
   };
-
+ 
   const addMember = () => {
     if (!newMemberId) return toast.warn("Please select a user");
-
+ 
     axios.post(`/group/${groupId}/addUser/${newMemberId}`)
       .then(() => {
         toast.success("Member added");
@@ -90,30 +95,29 @@ export default function GroupDetailsPage() {
       })
       .catch(() => toast.error("Error adding member"));
   };
-
-  /* --------------- SETTLE ACTION --------------- */
+ 
+  /* --------------- SETTLE ACTION (supports partial) --------------- */
   const settleUp = (payerId, receiverId, amount) => {
     axios.post("/settle", { groupId, payerId, receiverId, amount })
       .then(() => {
-        toast.success("Settlement done");
+        toast.success("Settlement successful");
         loadBalances();
         loadSettlements();
       })
       .catch(() => toast.error("Error settling payment"));
   };
-
+ 
   /* -------------------- RENDER -------------------- */
   return (
     <PageLayout username={username} menuItems={menuItems}>
       <div className="group-details-wrapper">
-
+ 
         {!group ? (
           <h3>Loading group…</h3>
         ) : (
           <>
-            {/* GROUP NAME */}
             <h1 className="group-title">{group.name}</h1>
-
+ 
             {/* PARTICIPANTS */}
             <div className="card">
               <div className="card-header" onClick={() => setShowMembers(!showMembers)}>
@@ -126,7 +130,7 @@ export default function GroupDetailsPage() {
                 </div>
               )}
             </div>
-
+ 
             {/* ADD MEMBER */}
             <div className="card add-box">
               <h3>Add Member</h3>
@@ -137,7 +141,7 @@ export default function GroupDetailsPage() {
               </select>
               <button onClick={addMember} className="primary-btn">+ Add Member</button>
             </div>
-
+ 
             {/* ADD EXPENSE */}
             <div className="card">
               {!showAddExpense ? (
@@ -150,42 +154,83 @@ export default function GroupDetailsPage() {
                 />
               )}
             </div>
-
+ 
             {/* BALANCES */}
             <div className="card">
               <h3>Group Balances</h3>
               <BalanceList balances={balances} members={group.members} />
             </div>
-
+ 
             {/* WHO OWES WHOM */}
-            {/* WHO OWES WHOM */}
-    <div className="card">
-    <h3>Who Owes Whom</h3>
-
-  {settlements.length === 0 ? (
-    <p>No pending settlements 🎉</p>
-  ) : (
-    settlements.map(s => (
-      <div key={`${s.payerId}-${s.receiverId}`} className="settlement-row">
-        {s.payerName} owes {s.receiverName} ₹{s.amount}
-
-        {s.amount > 0 && (
-          <button
-            className="settle-btn"
-            onClick={() => settleUp(s.payerId, s.receiverId, s.amount)}
-          >
-            Settle Up
-          </button>
-        )}
-      </div>
-    ))
-  )}
-</div>
-
+            <div className="card">
+              <h3>Who Owes Whom</h3>
+ 
+              {settlements.length === 0 ? (
+                <p>No pending settlements 🎉</p>
+              ) : (
+                settlements.map(s => (
+                  <div key={`${s.payerId}-${s.receiverId}`} className="settlement-row">
+                    {s.payerName} owes {s.receiverName} ₹{s.amount}
+ 
+                    <button
+                      className="settle-btn"
+                      onClick={() => {
+                        setSelectedSettlement(s);
+                        setPartialAmount(s.amount);
+                        setShowSettleBox(true);
+                      }}
+                    >
+                      Settle
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </>
         )}
+ 
+        {/* MODAL FOR PARTIAL SETTLEMENT */}
+        {showSettleBox && (
+          <div className="modal-backdrop">
+            <div className="modal-box">
+              <h3>Settle Payment</h3>
+ 
+              <p>
+                {selectedSettlement.payerName} → {selectedSettlement.receiverName}
+              </p>
+ 
+              <input
+                type="number"
+                value={partialAmount}
+                min="1"
+                max={selectedSettlement.amount}
+                onChange={(e) => setPartialAmount(e.target.value)}
+              />
+ 
+              <div className="modal-actions">
+                <button
+                  className="primary-btn"
+                  onClick={() => {
+                    settleUp(
+                      selectedSettlement.payerId,
+                      selectedSettlement.receiverId,
+                      parseFloat(partialAmount)
+                    );
+                    setShowSettleBox(false);
+                  }}
+                >
+                  Confirm
+                </button>
+ 
+                <button className="secondary-btn" onClick={() => setShowSettleBox(false)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+ 
       </div>
     </PageLayout>
   );
 }
-
