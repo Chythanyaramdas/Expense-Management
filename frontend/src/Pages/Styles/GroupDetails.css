@@ -104,3 +104,61 @@
   color: white;
   border-radius: 8px;
 }
+/* Rows inside MemberList and BalanceList */
+.member-row,
+.balance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 15px;
+}
+
+/* Remove / action buttons */
+.remove-btn {
+  background: #ff4d4f;
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.remove-btn:hover {
+  background: #ff7875;
+}
+/* Add Member Section */
+.add-box select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  outline: none;
+  transition: border 0.2s;
+  cursor: pointer;
+}
+
+.add-box select:focus {
+  border-color: #4b7bec;
+}
+
+.add-box .primary-btn {
+  background: #4b7bec;
+  border: none;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  width: 100%;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-box .primary-btn:hover {
+  background: #3867d6;
+}

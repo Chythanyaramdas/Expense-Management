@@ -12,24 +12,25 @@ export default function AddExpense({ groupId, onAdded, onClose }) {
   const [splitType, setSplitType] = useState("EQUAL");
   const [exactShares, setExactShares] = useState({});
 
-  /* -------------------- LOAD MEMBERS -------------------- */
+  // Load group members
   useEffect(() => {
     axios.get(`/group/${groupId}`)
       .then(res => setMembers(res.data.members))
       .catch(() => toast.error("Failed to load members"));
   }, [groupId]);
 
-  /* ------------------- AUTO ADD PAYER -------------------- */
+  // Automatically add payer to participants
   useEffect(() => {
     if (paidById && !participants.includes(paidById)) {
-      setParticipants((prev) => [...prev, paidById]);
+      setParticipants(prev => [paidById, ...prev]);
+      setExactShares(prev => ({ ...prev, [paidById]: prev[paidById] || Number(amount) || 0 }));
     }
   }, [paidById]);
 
-  /* ---------------------- SELECT PARTICIPANT ---------------------- */
   const addParticipant = (id) => {
     if (!participants.includes(id)) {
       setParticipants([...participants, id]);
+      if (splitType === "EXACT") setExactShares(prev => ({ ...prev, [id]: 0 }));
     }
   };
 
@@ -39,9 +40,13 @@ export default function AddExpense({ groupId, onAdded, onClose }) {
       return;
     }
     setParticipants(participants.filter(p => p !== id));
+    if (splitType === "EXACT") {
+      const copy = { ...exactShares };
+      delete copy[id];
+      setExactShares(copy);
+    }
   };
 
-  /* ----------------------- SUBMIT ----------------------- */
   const submitExpense = () => {
     if (!title || !amount || !paidById || participants.length === 0) {
       return toast.warn("Please fill all fields");
@@ -58,7 +63,7 @@ export default function AddExpense({ groupId, onAdded, onClose }) {
     })
       .then(() => {
         toast.success("Expense added!");
-        onAdded();
+        onAdded(); // Refresh balances & settlements
         onClose();
       })
       .catch(() => toast.error("Failed to add expense"));
@@ -66,55 +71,42 @@ export default function AddExpense({ groupId, onAdded, onClose }) {
 
   return (
     <div className="add-expense-form">
-
       <h3>Add Expense</h3>
 
       <input
         type="text"
         placeholder="Expense title"
         value={title}
-        onChange={(e) => setTitle(e.target.value)}
+        onChange={e => setTitle(e.target.value)}
       />
 
       <input
         type="number"
         placeholder="Total amount"
         value={amount}
-        onChange={(e) => setAmount(e.target.value)}
+        onChange={e => setAmount(e.target.value)}
       />
 
-      {/* Paid By */}
       <label>Paid By</label>
-      <select
-        value={paidById}
-        onChange={(e) => setPaidById(Number(e.target.value))}
-      >
+      <select value={paidById} onChange={e => setPaidById(Number(e.target.value))}>
         <option value="">Select user</option>
         {members.map(m => (
           <option key={m.id} value={m.id}>{m.username}</option>
         ))}
       </select>
 
-      {/* PARTICIPANT DROPDOWN + CHIPS */}
       <label>Participants</label>
       <div className="participant-box">
-
-        {/* Dropdown to add */}
         <select
           className="participant-dropdown"
-          onChange={(e) => addParticipant(Number(e.target.value))}
+          onChange={e => addParticipant(Number(e.target.value))}
         >
           <option value="">Select participant</option>
-          {members
-            .filter(m => !participants.includes(m.id))
-            .map(m => (
-              <option key={m.id} value={m.id}>
-                {m.username}
-              </option>
-            ))}
+          {members.filter(m => !participants.includes(m.id)).map(m => (
+            <option key={m.id} value={m.id}>{m.username}</option>
+          ))}
         </select>
 
-        {/* Chips */}
         <div className="participant-chips">
           {participants.map(id => {
             const user = members.find(u => u.id === id);
@@ -122,12 +114,7 @@ export default function AddExpense({ groupId, onAdded, onClose }) {
               <div key={id} className="chip">
                 {user?.username}
                 {id !== paidById && (
-                  <button
-                    className="chip-remove"
-                    onClick={() => removeParticipant(id)}
-                  >
-                    ×
-                  </button>
+                  <button className="chip-remove" onClick={() => removeParticipant(id)}>×</button>
                 )}
               </div>
             );
@@ -135,7 +122,6 @@ export default function AddExpense({ groupId, onAdded, onClose }) {
         </div>
       </div>
 
-      {/* SPLIT TYPE */}
       <label>Split Type</label>
       <div className="split-options">
         <label>
@@ -144,8 +130,7 @@ export default function AddExpense({ groupId, onAdded, onClose }) {
             value="EQUAL"
             checked={splitType === "EQUAL"}
             onChange={() => setSplitType("EQUAL")}
-          />
-          Equal
+          /> Equal
         </label>
 
         <label>
@@ -154,12 +139,10 @@ export default function AddExpense({ groupId, onAdded, onClose }) {
             value="EXACT"
             checked={splitType === "EXACT"}
             onChange={() => setSplitType("EXACT")}
-          />
-          Exact
+          /> Exact
         </label>
       </div>
 
-      {/* EXACT SHARES */}
       {splitType === "EXACT" && (
         <div className="exact-share-box">
           <h4>Enter exact shares</h4>
@@ -170,11 +153,9 @@ export default function AddExpense({ groupId, onAdded, onClose }) {
                 {user.username}:
                 <input
                   type="number"
-                  onChange={(e) =>
-                    setExactShares({
-                      ...exactShares,
-                      [id]: Number(e.target.value)
-                    })
+                  value={exactShares[id] || ""}
+                  onChange={e =>
+                    setExactShares({ ...exactShares, [id]: Number(e.target.value) })
                   }
                 />
               </div>
@@ -185,7 +166,6 @@ export default function AddExpense({ groupId, onAdded, onClose }) {
 
       <button className="primary-btn" onClick={submitExpense}>Add Expense</button>
       <button className="secondary-btn" onClick={onClose}>Cancel</button>
-
     </div>
   );
 }

@@ -16,5 +16,6 @@ public interface SettleRepository extends JpaRepository<Settlement, Long> {
             "LEFT JOIN FETCH s.receiver " +
             "WHERE s.group.id = :groupId")
     List<Settlement> findAllByGroupId(@Param("groupId") Long groupId);
+    void deleteAllByGroupId(Long groupId);
 }
 

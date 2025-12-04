@@ -5,6 +5,8 @@ import com.example.project.dto.GroupDetails;
 import com.example.project.model.Group;
 import com.example.project.service.GroupService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,9 +20,8 @@ public class GroupController {
 
     @PostMapping("/create")
     public Group createGroup(@RequestBody CreateGroupRequest request) {
-        return groupService.createGroup(request.name, request.userIds);
+        return groupService.createGroup(request.getName(), request.getUserIds(), request.getCreatorId());
     }
-
     @PostMapping("/{groupId}/addUser/{userId}")
     public Group addUser(@PathVariable Long groupId, @PathVariable Long userId) {
         return groupService.addUserToGroup(groupId, userId);
@@ -35,9 +36,14 @@ public class GroupController {
     public GroupDetails getGroup(@PathVariable Long groupId) {
         return groupService.getGroupDetails(groupId);
     }
-
     @GetMapping("/user/{userId}")
     public List<Group> getGroupsForUser(@PathVariable Long userId) {
-        return groupService.getGroupForUser(userId);
+        return groupService.getGroupsForUser(userId);
+    }
+
+    @DeleteMapping("/{groupId}")
+    public ResponseEntity<String> deleteGroup(@PathVariable Long groupId) {
+        groupService.deleteGroup(groupId);
+        return ResponseEntity.ok("Group deleted successfully");
     }
 }

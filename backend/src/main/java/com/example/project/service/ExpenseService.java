@@ -10,6 +10,7 @@ import com.example.project.model.User;
 import com.example.project.repository.ExpenseRepository;
 import com.example.project.repository.GroupRepository;
 import com.example.project.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -96,70 +97,69 @@ public class ExpenseService {
 
     public Map<Long, Double> calculateGroupBalances(Long groupId) {
 
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        List<User> members = group.getUsers(); // Current group members
         List<Expense> expenses = expenseRepository.findAllByGroupId(groupId);
-        // Use Double for the balances map to comply with the required return type
-        Map<Long, Double> balances = new HashMap<>();
 
+        // Initialize balances
+        Map<Long, BigDecimal> balances = new HashMap<>();
+        for (User user : members) {
+            balances.put(user.getId(), BigDecimal.ZERO);
+        }
+
+        // Calculate balances
         for (Expense expense : expenses) {
+            BigDecimal totalAmount = BigDecimal.valueOf(expense.getAmount());
+
+            // Add to payer
             Long payerId = expense.getPayer().getId();
-            Double amount = expense.getAmount();
+            balances.put(payerId, balances.getOrDefault(payerId, BigDecimal.ZERO).add(totalAmount));
 
-            // 1. Accumulate Payer's positive balance (Paid money)
-            balances.put(payerId, balances.getOrDefault(payerId, 0.0) + amount);
+            // Subtract from participants
+            Map<Long, Double> userShares = expense.getUserShares();
+            BigDecimal distributed = BigDecimal.ZERO;
+            List<Long> participantIds = new ArrayList<>(userShares.keySet());
 
-            // 2. Iterate over shares to deduct what is owed (Negative balance)
-            // We must assume expense.getUserShares() returns Map<Long, Double> based on errors
-            for (Map.Entry<Long, Double> entry : expense.getUserShares().entrySet()) {
-                Long userId = entry.getKey();
-                Double share = entry.getValue();
+            for (int i = 0; i < participantIds.size(); i++) {
+                Long uid = participantIds.get(i);
+                BigDecimal share = BigDecimal.valueOf(userShares.get(uid)).setScale(2, RoundingMode.HALF_UP);
 
-                balances.put(userId, balances.getOrDefault(userId, 0.0) - share);
+                if (i == participantIds.size() - 1) {
+                    // Last participant absorbs rounding difference
+                    share = totalAmount.subtract(distributed);
+                } else {
+                    distributed = distributed.add(share);
+                }
+
+                balances.put(uid, balances.getOrDefault(uid, BigDecimal.ZERO).subtract(share));
             }
         }
 
-        // 3. Mitigation Step: Round all final balances to eliminate floating-point errors
+        // Convert to Double for frontend
         Map<Long, Double> finalBalances = new HashMap<>();
-
-        for (Map.Entry<Long, Double> entry : balances.entrySet()) {
-            Long userId = entry.getKey();
-            Double balance = entry.getValue();
-
-            // Use BigDecimal for the rounding operation to ensure accuracy in rounding
-            BigDecimal bd = new BigDecimal(balance);
-
-            // Round to 2 decimal places (standard for currency) using commercial rounding
-            bd = bd.setScale(2, RoundingMode.HALF_UP);
-
-            // Convert the clean, rounded value back to Double
-            finalBalances.put(userId, bd.doubleValue());
+        for (Map.Entry<Long, BigDecimal> entry : balances.entrySet()) {
+            finalBalances.put(entry.getKey(), entry.getValue().setScale(2, RoundingMode.HALF_UP).doubleValue());
         }
 
         return finalBalances;
     }
 
+    @Transactional
     public List<SettlementResult> calculateSettlements(Long groupId) {
-
-        List<Expense> expenses = expenseRepository.findAllByGroupId(groupId);
-
-        // 1️⃣ Calculate balances
         Map<Long, Double> balances = calculateGroupBalances(groupId);
 
-        // 2️⃣ Build user lookup
         Group group = groupRepository.findById(groupId).orElseThrow();
-        Map<Long, User> userMap = new HashMap<>();
-        for (User u : group.getUsers()) {
-            userMap.put(u.getId(), u);
-        }
+        Map<Long, User> userMap = group.getUsers().stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
 
-        // 3️⃣ Split creditors and debtors
-        List<Map.Entry<Long, Double>> creditors = balances.entrySet()
-                .stream()
+        List<Map.Entry<Long, Double>> creditors = balances.entrySet().stream()
                 .filter(e -> e.getValue() > 0)
                 .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
                 .collect(Collectors.toList());
 
-        List<Map.Entry<Long, Double>> debtors = balances.entrySet()
-                .stream()
+        List<Map.Entry<Long, Double>> debtors = balances.entrySet().stream()
                 .filter(e -> e.getValue() < 0)
                 .sorted((a, b) -> Double.compare(a.getValue(), b.getValue()))
                 .collect(Collectors.toList());
@@ -167,7 +167,6 @@ public class ExpenseService {
         List<SettlementResult> settlements = new ArrayList<>();
         int i = 0, j = 0;
 
-        // 4️⃣ Create structured settlement objects
         while (i < creditors.size() && j < debtors.size()) {
             Long creditorId = creditors.get(i).getKey();
             Long debtorId = debtors.get(j).getKey();
@@ -177,20 +176,14 @@ public class ExpenseService {
 
             double settleAmount = Math.min(credit, debit);
 
-            String note = userMap.get(debtorId).getUsername() +
-                    " owes " + userMap.get(creditorId).getUsername() +
-                    " ₹" + settleAmount;
-
-            settlements.add(
-                    new SettlementResult(
-                            debtorId,
-                            userMap.get(debtorId).getUsername(),
-                            creditorId,
-                            userMap.get(creditorId).getUsername(),
-                            settleAmount,
-                            note
-                    )
-            );
+            settlements.add(new SettlementResult(
+                    debtorId,
+                    userMap.get(debtorId).getUsername(),
+                    creditorId,
+                    userMap.get(creditorId).getUsername(),
+                    settleAmount,
+                    userMap.get(debtorId).getUsername() + " owes " + userMap.get(creditorId).getUsername() + " ₹" + settleAmount
+            ));
 
             creditors.get(i).setValue(credit - settleAmount);
             debtors.get(j).setValue(-(debit - settleAmount));
@@ -199,7 +192,25 @@ public class ExpenseService {
             if (debit - settleAmount == 0) j++;
         }
 
+        // ✅ Mark all expenses in this group as settled
+        List<Expense> expenses = expenseRepository.findAllByGroupId(groupId);
+        for (Expense expense : expenses) {
+            expense.setSettled(true);
+        }
+        expenseRepository.saveAll(expenses);
+
         return settlements;
     }
+    @Transactional
+    public void markExpensesAsSettled(Long groupId) {
+        List<Expense> expenses = expenseRepository.findAllByGroupId(groupId);
+
+        for (Expense expense : expenses) {
+            expense.setSettled(true);  // mark in memory
+        }
+
+        expenseRepository.saveAll(expenses);  // persist changes to DB
+    }
+
 
 }
