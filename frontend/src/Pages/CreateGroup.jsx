@@ -23,13 +23,12 @@ export default function CreateGroup({ onGroupsUpdate }) {
   ];
 
   useEffect(() => {
-    // Fetch logged-in user
     axios.get("/users/me", { withCredentials: true })
       .then(res => {
         if (!res.data || !res.data.id) throw new Error("Invalid user data");
         setUsername(res.data.username);
         setUserId(res.data.id);
-        setSelectedUsers([res.data.id]); // pre-select logged-in user
+        setSelectedUsers([res.data.id]);
         setLoadingUser(false);
       })
       .catch(() => {
@@ -37,7 +36,6 @@ export default function CreateGroup({ onGroupsUpdate }) {
         setLoadingUser(false);
       });
 
-    // Fetch all users
     axios.get("/users/all")
       .then(res => {
         const allUsers = Array.isArray(res.data) 
@@ -49,7 +47,7 @@ export default function CreateGroup({ onGroupsUpdate }) {
   }, []);
 
   const toggleUser = (id) => {
-    if (id === userId) return; // logged-in user cannot be deselected
+    if (id === userId) return;
     setSelectedUsers(prev =>
       prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]
     );
@@ -63,9 +61,7 @@ export default function CreateGroup({ onGroupsUpdate }) {
       await axios.post("/group/create", { name, userIds: selectedUsers, creatorId: userId });
       toast.success("Group created!");
       setName("");
-      setSelectedUsers([userId]); // keep logged-in user selected
-
-      // Refresh groups list in parent component if callback provided
+      setSelectedUsers([userId]);
       if (onGroupsUpdate) onGroupsUpdate();
     } catch (err) {
       toast.error(err.response?.data || "Failed to create group");
@@ -92,7 +88,7 @@ export default function CreateGroup({ onGroupsUpdate }) {
             users={users}
             selected={selectedUsers}
             onToggle={toggleUser}
-            loggedInUserId={userId} // pass logged-in user for labeling
+            loggedInUserId={userId} 
           />
 
           <button

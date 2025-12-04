@@ -1,4 +1,4 @@
-// src/components/settlement/SettleUpButton.jsx
+
 import { useState } from "react";
 import SettleModal from "./SettlementModal";
 

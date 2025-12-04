@@ -1,6 +1,5 @@
 package com.example.project.dto;
 
-
 public class SettlementRequest {
     private Long groupId;
     private Long payerId;

@@ -18,6 +18,15 @@ export default function Register() {
       toast.error("Username and password cannot be empty");
       return;
     }
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    if (!passwordRegex.test(form.password)) {
+      toast.error(
+        "Password must be at least 8 characters, include uppercase, lowercase, number, and special symbol."
+      );
+      return;
+    }
 
     try {
       await axios.post("/users/register", form);
@@ -28,7 +37,7 @@ export default function Register() {
       }, 1200);
 
     } catch (err) {
-      toast.error("Registration failed. Try again.");
+      toast.error(err.response?.data || "Registration failed. Try again.");
     }
   };
 

@@ -1,4 +1,4 @@
-// src/components/settlement/WhoOwesWhom.jsx
+
 import SettleUpButton from "./SettlementButton";
 
 export default function WhoOwesWhom({ balances, members, groupId, onSettled }) {

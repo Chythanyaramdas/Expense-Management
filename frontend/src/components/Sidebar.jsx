@@ -8,7 +8,7 @@ export default function Sidebar({ username, menuItems }) {
   const handleLogout = async () => {
     try {
       await axios.post("/users/logout", {}, { withCredentials: true });
-      navigate("/login"); // redirect to login page
+      navigate("/login"); 
     } catch (err) {
       console.error("Logout failed:", err);
     }
@@ -22,7 +22,7 @@ export default function Sidebar({ username, menuItems }) {
       <div className="menu-items">
         {menuItems.map((item, index) =>
           item.label === "Logout" ? (
-            // 🔥 LOGOUT AS A BUTTON, NOT NAVLINK
+            
             <button
               key={index}
               className={`menu-item logout ${item.className || ""}`}
@@ -31,7 +31,7 @@ export default function Sidebar({ username, menuItems }) {
               {item.icon} {item.label}
             </button>
           ) : (
-            // Normal menu items → NavLink
+  
             <NavLink
               key={index}
               to={item.path}

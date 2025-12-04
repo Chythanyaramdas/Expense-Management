@@ -14,5 +14,6 @@ public class CreateGroupRequest {
     public void setUserIds(List<Long> userIds) { this.userIds = userIds; }
 
     public Long getCreatorId() { return creatorId; }
+
     public void setCreatorId(Long creatorId) { this.creatorId = creatorId; }
 }

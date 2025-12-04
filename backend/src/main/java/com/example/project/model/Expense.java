@@ -21,7 +21,6 @@ public class Expense {
     @Column(nullable = false)
     private String splitType;
 
-    /* ---------------------- PARTICIPANTS ---------------------- */
     @ManyToMany
     @JoinTable(
             name = "expense_participants",
@@ -30,22 +29,19 @@ public class Expense {
     )
     private List<User> participants;
 
-    /* ---------------------- USER SHARES MAP ---------------------- */
     @ElementCollection
     @CollectionTable(
             name = "expense_shares",
             joinColumns = @JoinColumn(name = "expense_id")
     )
-    @MapKeyColumn(name = "share_user_id")     // COLUMN IN ORACLE
-    @Column(name = "share_amount")            // COLUMN IN ORACLE
+    @MapKeyColumn(name = "share_user_id")
+    @Column(name = "share_amount")
     private Map<Long, Double> userShares;
 
-    /* ---------------------- GROUP ---------------------- */
     @ManyToOne
     @JoinColumn(name = "group_id")
     private Group group;
 
-    /* ---------------------- PAYER ---------------------- */
     @ManyToOne
     @JoinColumn(name = "payer_id")
     private User payer;
@@ -53,8 +49,6 @@ public class Expense {
     @Column(name = "SETTLED", nullable = false)
     private boolean settled = false;
 
-
-    /* ---------------------- GETTERS/SETTERS ---------------------- */
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

@@ -21,11 +21,12 @@ export default function Login() {
     try {
       await axios.post("/users/login", form, { withCredentials: true });
 
-      // fetch user after login
-      const res = await axios.get("/users/me", { withCredentials: true });
       toast.success("Login successful!");
 
-      navigate("/dashboard");
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 100);
+
     } catch (err) {
       toast.error("Invalid credentials");
     }

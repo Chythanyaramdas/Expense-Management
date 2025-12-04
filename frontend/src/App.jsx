@@ -7,6 +7,7 @@ import CreateGroup from"./Pages/CreateGroup";
 import Groups  from "./Pages/Group";
 import GroupDetailsPage from "./Pages/GroupDetailsPage";
 import Login from "./Pages/Login";
+import Activity from "./Pages/Activity";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -32,6 +33,7 @@ function App() {
       <Route path="/create-group" element={<CreateGroup />} />   
       <Route path="/groups" element={<Groups />} />
       <Route path="/group/:groupId" element={<GroupDetailsPage />} />
+      <Route path="/activity" element={<Activity/>}/>
       </Routes>
     </BrowserRouter>
   );

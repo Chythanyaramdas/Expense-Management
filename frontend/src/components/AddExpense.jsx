@@ -12,14 +12,12 @@ export default function AddExpense({ groupId, onAdded, onClose }) {
   const [splitType, setSplitType] = useState("EQUAL");
   const [exactShares, setExactShares] = useState({});
 
-  // Load group members
   useEffect(() => {
     axios.get(`/group/${groupId}`)
       .then(res => setMembers(res.data.members))
       .catch(() => toast.error("Failed to load members"));
   }, [groupId]);
 
-  // Automatically add payer to participants
   useEffect(() => {
     if (paidById && !participants.includes(paidById)) {
       setParticipants(prev => [paidById, ...prev]);
@@ -63,7 +61,7 @@ export default function AddExpense({ groupId, onAdded, onClose }) {
     })
       .then(() => {
         toast.success("Expense added!");
-        onAdded(); // Refresh balances & settlements
+        onAdded(); 
         onClose();
       })
       .catch(() => toast.error("Failed to add expense"));

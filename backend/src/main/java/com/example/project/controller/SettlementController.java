@@ -1,6 +1,5 @@
 package com.example.project.controller;
 
-
 import com.example.project.dto.SettlementRequest;
 import com.example.project.dto.SettlementResult;
 import com.example.project.model.Settlement;
@@ -24,6 +23,7 @@ public class SettlementController {
 
     @PostMapping("/settle")
     public Settlement settle(@RequestBody SettlementRequest req) {
+
         return settlementService.recordSettlement(
                 req.getGroupId(),
                 req.getPayerId(),
@@ -34,6 +34,7 @@ public class SettlementController {
 
     @GetMapping("/settlements/{groupId}")
     public List<SettlementResult> history(@PathVariable Long groupId) {
+
         return expenseService.calculateSettlements(groupId);
     }
 

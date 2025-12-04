@@ -15,7 +15,7 @@ export default function SettleModal({ groupId, payerId, receiverId, amount, onCl
         params: { groupId, payerId, receiverId, amount: payAmount }
       });
       toast.success("Settlement successful!");
-      onSettled(); // reload balances + settlements
+      onSettled(); 
     } catch (err) {
       toast.error("Failed to settle payment");
     }

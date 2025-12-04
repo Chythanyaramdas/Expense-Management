@@ -1,7 +1,5 @@
 package com.example.project.service;
 
-
-
 import com.example.project.dto.SettlementResult;
 import com.example.project.model.Expense;
 
@@ -14,7 +12,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -22,7 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 
 @Service
 public class ExpenseService {
@@ -35,6 +31,9 @@ public class ExpenseService {
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    private ActivityService activityService;
 
     public Expense addExpense(Long groupId, String title, Double totalAmount,
                               Long paidById, String splitType,
@@ -55,7 +54,6 @@ public class ExpenseService {
 
         Map<Long, Double> userShares = new HashMap<>();
 
-        // ========== SPLIT TYPE: EQUAL ==========
         if ("EQUAL".equalsIgnoreCase(splitType)) {
 
             double share = totalAmount / participants.size();
@@ -65,7 +63,6 @@ public class ExpenseService {
             }
         }
 
-        // ========== SPLIT TYPE: EXACT ==========
         else if ("EXACT".equalsIgnoreCase(splitType)) {
 
             if (exactShares == null || exactShares.isEmpty()) {
@@ -81,15 +78,23 @@ public class ExpenseService {
             userShares.putAll(exactShares);
         }
 
-        // ========== INVALID SPLIT TYPE ==========
         else {
             throw new IllegalArgumentException("Invalid split type. Use EQUAL or EXACT.");
         }
 
         expense.setUserShares(userShares);
 
-        return expenseRepository.save(expense);
+        Expense saved = expenseRepository.save(expense);
+        activityService.log(
+                paidById,
+                groupId,
+                saved.getId(),
+                "Added expense '" + title + "' of ₹" + totalAmount
+        );
+
+        return saved;
     }
+
     public List<Expense> getExpensesByGroup(Long groupId) {
         return expenseRepository.findAllByGroupId(groupId);
     }
@@ -103,21 +108,17 @@ public class ExpenseService {
         List<User> members = group.getUsers(); // Current group members
         List<Expense> expenses = expenseRepository.findAllByGroupId(groupId);
 
-        // Initialize balances
         Map<Long, BigDecimal> balances = new HashMap<>();
         for (User user : members) {
             balances.put(user.getId(), BigDecimal.ZERO);
         }
 
-        // Calculate balances
         for (Expense expense : expenses) {
             BigDecimal totalAmount = BigDecimal.valueOf(expense.getAmount());
 
-            // Add to payer
             Long payerId = expense.getPayer().getId();
             balances.put(payerId, balances.getOrDefault(payerId, BigDecimal.ZERO).add(totalAmount));
 
-            // Subtract from participants
             Map<Long, Double> userShares = expense.getUserShares();
             BigDecimal distributed = BigDecimal.ZERO;
             List<Long> participantIds = new ArrayList<>(userShares.keySet());
@@ -127,7 +128,6 @@ public class ExpenseService {
                 BigDecimal share = BigDecimal.valueOf(userShares.get(uid)).setScale(2, RoundingMode.HALF_UP);
 
                 if (i == participantIds.size() - 1) {
-                    // Last participant absorbs rounding difference
                     share = totalAmount.subtract(distributed);
                 } else {
                     distributed = distributed.add(share);
@@ -137,7 +137,6 @@ public class ExpenseService {
             }
         }
 
-        // Convert to Double for frontend
         Map<Long, Double> finalBalances = new HashMap<>();
         for (Map.Entry<Long, BigDecimal> entry : balances.entrySet()) {
             finalBalances.put(entry.getKey(), entry.getValue().setScale(2, RoundingMode.HALF_UP).doubleValue());
@@ -191,8 +190,6 @@ public class ExpenseService {
             if (credit - settleAmount == 0) i++;
             if (debit - settleAmount == 0) j++;
         }
-
-        // ✅ Mark all expenses in this group as settled
         List<Expense> expenses = expenseRepository.findAllByGroupId(groupId);
         for (Expense expense : expenses) {
             expense.setSettled(true);
@@ -201,16 +198,16 @@ public class ExpenseService {
 
         return settlements;
     }
+
     @Transactional
     public void markExpensesAsSettled(Long groupId) {
         List<Expense> expenses = expenseRepository.findAllByGroupId(groupId);
 
         for (Expense expense : expenses) {
-            expense.setSettled(true);  // mark in memory
+            expense.setSettled(true);
         }
 
-        expenseRepository.saveAll(expenses);  // persist changes to DB
+        expenseRepository.saveAll(expenses);
     }
-
 
 }

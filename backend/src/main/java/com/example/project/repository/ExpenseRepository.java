@@ -1,6 +1,5 @@
 package com.example.project.repository;
 
-
 import com.example.project.model.Expense;
 import com.example.project.model.Group;
 import com.example.project.model.User;
@@ -19,6 +18,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Expense> findAllByGroupId(Long groupId);
 
     List<Expense> findAllByPayerId(Long payerId);
+
     boolean existsByGroupId(Long groupId);
 
 }

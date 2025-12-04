@@ -6,13 +6,11 @@ export default function UserDropdownSelect({ users = [], selected = [], onToggle
 
   return (
     <div className="dropdown-container">
-      {/* Dropdown header */}
       <div className="dropdown-box" onClick={() => setOpen(!open)}>
         <span>Select Members</span>
         <span className="arrow">{open ? "▲" : "▼"}</span>
       </div>
 
-      {/* Selected users chips */}
       <div className="selected-list">
         {selected.map(id => {
           const user = users.find(u => u?.id === id);
@@ -26,7 +24,6 @@ export default function UserDropdownSelect({ users = [], selected = [], onToggle
         })}
       </div>
 
-      {/* Dropdown list */}
       {open && (
         <div className="dropdown-menu">
           {users.map(u => {

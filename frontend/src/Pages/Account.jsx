@@ -16,10 +16,11 @@ export default function Account() {
     { label: "Logout", path: "/login", icon: "🚪", className: "logout" },
   ];
 
+  // Load current user
   useEffect(() => {
     axios
       .get("/users/me", { withCredentials: true })
-      .then((res) => setUser(res.data))
+      .then((res) => setUser({ ...res.data, password: "" }))
       .catch(() => console.log("Not logged in"));
   }, []);
 
@@ -27,16 +28,31 @@ export default function Account() {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
+  // ⭐ FIXED update function (username-only update allowed)
   const handleUpdate = async () => {
     try {
-      await axios.put(`/users/${user.id}`, user, { withCredentials: true });
+      // Build payload
+      const payload = {
+        username: user.username,
+      };
+
+      // ⭐ Only include password if user typed something
+      if (user.password && user.password.trim() !== "") {
+        payload.password = user.password;
+      }
+
+      await axios.put(`/users/${user.id}`, payload, { withCredentials: true });
 
       toast.success("Profile updated successfully!", {
         position: "top-center",
         autoClose: 1500,
       });
+
+      // Clear password field after update
+      setUser((prev) => ({ ...prev, password: "" }));
+
     } catch (err) {
-      toast.error("Update failed! Try again.", {
+      toast.error(err.response?.data || "Update failed! Try again.", {
         position: "top-center",
         autoClose: 1500,
       });
@@ -61,7 +77,7 @@ export default function Account() {
               placeholder="Enter new username"
             />
 
-            <label>Password</label>
+            <label>New Password (optional)</label>
             <input
               type="password"
               name="password"

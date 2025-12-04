@@ -128,7 +128,6 @@ export default function GroupDetailsPage() {
           <>
             <h1 className="group-title">{group.name}</h1>
 
-            {/* Participants */}
             <div className="card">
               <div className="card-header" onClick={() => setShowMembers(!showMembers)}>
                 <span>👥 View Participants</span>
@@ -146,7 +145,6 @@ export default function GroupDetailsPage() {
               )}
             </div>
 
-            {/* Add Member */}
             <div className="card add-box">
               <h3>Add Member</h3>
               <select value={newMemberId} onChange={e => setNewMemberId(e.target.value)}>
@@ -157,7 +155,6 @@ export default function GroupDetailsPage() {
               <button onClick={addMember} className="primary-btn">+ Add Member</button>
             </div>
 
-            {/* Add Expense */}
             <div className="card">
               {!showAddExpense ? (
                 <button className="primary-btn" onClick={() => setShowAddExpense(true)}>+ Add Expense</button>
@@ -165,8 +162,8 @@ export default function GroupDetailsPage() {
                 <AddExpense
                   groupId={groupId}
                   onAdded={() => {
-                    loadBalances();     // Update balances after adding expense
-                    loadSettlements();  // Update settlements
+                    loadBalances();     
+                    loadSettlements();  
                     setShowAddExpense(false);
                   }}
                   onClose={() => setShowAddExpense(false)}
@@ -174,7 +171,6 @@ export default function GroupDetailsPage() {
               )}
             </div>
 
-            {/* Group Balances */}
             <div className="card">
               <h3>Group Balances</h3>
               <BalanceList
@@ -184,7 +180,6 @@ export default function GroupDetailsPage() {
               />
             </div>
 
-            {/* Who Owes Whom */}
             <div className="card">
               <h3>Who Owes Whom</h3>
               {settlements.length === 0 ? (
@@ -204,7 +199,6 @@ export default function GroupDetailsPage() {
               ))}
             </div>
 
-            {/* Partial Settlement Modal */}
             {showSettleBox && selectedSettlement && (
               <div className="modal-backdrop">
                 <div className="modal-box">

@@ -1,5 +1,4 @@
 export default function BalanceList({ balances = {}, members = [], onRemoveUser }) {
-  // Ensure userId type matches members' IDs
   const getUser = (id) => members.find(m => m.id === Number(id));
 
   return (
@@ -7,7 +6,7 @@ export default function BalanceList({ balances = {}, members = [], onRemoveUser 
       {Object.entries(balances)
         .map(([userId, bal]) => {
           const user = getUser(userId);
-          if (!user) return null; // skip unknown users
+          if (!user) return null; 
 
           return (
             <div key={userId} className="balance-row">

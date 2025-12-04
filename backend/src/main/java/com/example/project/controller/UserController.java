@@ -9,9 +9,14 @@ import org.springframework.web.bind.annotation.*;
 import com.example.project.model.User;
 import com.example.project.service.UserService;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 @RestController
 @RequestMapping("/users")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://localhost:3000",
+        allowCredentials = "true")
 public class UserController {
 
     @Autowired
@@ -21,7 +26,6 @@ public class UserController {
     public ResponseEntity<?> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
-
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
@@ -33,18 +37,17 @@ public class UserController {
         }
     }
 
-
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody User user, HttpServletResponse response) {
         User loggedIn = userService.loginUser(user.getUsername(), user.getPassword());
         if (loggedIn != null) {
-            Cookie cookie = new Cookie("username", loggedIn.getUsername());
+            String encodedUsername = URLEncoder.encode(loggedIn.getUsername(), StandardCharsets.UTF_8);
+            Cookie cookie = new Cookie("username", encodedUsername);
             cookie.setHttpOnly(true);
             cookie.setPath("/");
             cookie.setMaxAge(24 * 60 * 60);
 
             cookie.setSecure(false);
-            cookie.setDomain("localhost");
 
             response.addCookie(cookie);
 
@@ -65,10 +68,11 @@ public class UserController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
+
         Cookie cookie = new Cookie("username", null);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
-        cookie.setMaxAge(0); // delete cookie
+        cookie.setMaxAge(0);
         response.addCookie(cookie);
         return ResponseEntity.ok("Logged out");
     }
@@ -76,6 +80,10 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(
             @CookieValue(value = "username", defaultValue = "") String username) {
+
+        try {
+            username = URLDecoder.decode(username, StandardCharsets.UTF_8);
+        } catch (Exception ignored) {}
 
         if (username.isEmpty()) {
             return ResponseEntity.status(401).body("Not logged in");
@@ -87,6 +95,7 @@ public class UserController {
         return ResponseEntity.ok(foundUser);
     }
 
+
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(
             @PathVariable Long id,
@@ -94,14 +103,12 @@ public class UserController {
             HttpServletResponse response) {
 
         User savedUser = userService.updateUser(id, updatedUser);
-
-        Cookie cookie = new Cookie("username", savedUser.getUsername());
+        String encodedUsername = URLEncoder.encode(savedUser.getUsername(), StandardCharsets.UTF_8);
+        Cookie cookie = new Cookie("username", encodedUsername);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
         cookie.setMaxAge(24 * 60 * 60);
         cookie.setSecure(false);
-        cookie.setDomain("localhost");
-
         response.addCookie(cookie);
 
         return ResponseEntity.ok(savedUser);

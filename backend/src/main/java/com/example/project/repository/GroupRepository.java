@@ -1,7 +1,6 @@
 package com.example.project.repository;
 
 import com.example.project.model.Group;
-import com.example.project.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

@@ -1,0 +1,44 @@
+.activity-container {
+  padding: 20px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.activity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.activity-item {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 15px 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: transform 0.1s ease-in-out;
+}
+
+.activity-item:hover {
+  transform: translateY(-3px);
+}
+
+.activity-time {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.activity-message {
+  margin-top: 6px;
+  font-size: 1rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.no-activity {
+  margin-top: 20px;
+  font-size: 1rem;
+  color: #777;
+  text-align: center;
+}

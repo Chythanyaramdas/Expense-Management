@@ -1,10 +1,7 @@
 package com.example.project.service;
 
 import com.example.project.dto.GroupDetails;
-import com.example.project.dto.SettlementResult;
-import com.example.project.model.Expense;
 import com.example.project.model.Group;
-import com.example.project.model.Settlement;
 import com.example.project.model.User;
 import com.example.project.repository.ExpenseRepository;
 import com.example.project.repository.GroupRepository;
@@ -17,7 +14,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class GroupService {
@@ -32,13 +28,15 @@ public class GroupService {
     private ExpenseService expenseService;
 
     @Autowired
+    private ActivityService activityService;
+
+    @Autowired
     private ExpenseRepository expenseRepository;
 
     @Autowired
     private SettleRepository settleRepository;
 
 
-    // ---------------- CREATE GROUP ----------------
     public Group createGroup(String name, List<Long> userIds, Long creatorId) {
 
         if (name == null || name.trim().isEmpty())
@@ -58,20 +56,26 @@ public class GroupService {
             ));
         }
 
-        // Add creator always
         User creator = userRepository.findById(creatorId)
                 .orElseThrow(() -> new RuntimeException("Creator not found"));
         users.add(creator);
 
-        // Remove duplicates
         group.setUsers(users.stream().distinct().toList());
 
-        return groupRepository.save(group);
+        Group savedGroup = groupRepository.save(group);
+
+        activityService.log(
+                creatorId,
+                savedGroup.getId(),
+                null,
+                "Created group '" + savedGroup.getName() + "'"
+        );
+
+        return savedGroup;
     }
 
-
-    // ---------------- ADD USER ----------------
     public Group addUserToGroup(Long groupId, Long userId) {
+
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
 
@@ -82,12 +86,12 @@ public class GroupService {
             throw new RuntimeException("User already in group");
 
         group.getUsers().add(user);
+
         return groupRepository.save(group);
     }
 
-
-    // ---------------- REMOVE USER ----------------
     public Group removeUserFromGroup(Long groupId, Long userId) {
+
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
 
@@ -115,9 +119,8 @@ public class GroupService {
         return groupRepository.save(group);
     }
 
-
-    // ---------------- GROUP DETAILS ----------------
     public GroupDetails getGroupDetails(Long groupId) {
+
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
 
@@ -130,30 +133,20 @@ public class GroupService {
         return dto;
     }
 
-
-    // ---------------- GET GROUPS FOR USER ----------------
     public List<Group> getGroupsForUser(Long userId) {
+
         return groupRepository.findAllByUserId(userId);
     }
 
-
-    // ---------------- DELETE GROUP ----------------
     @Transactional
     public void deleteGroup(Long groupId) {
+
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
-
-        // 1️⃣ Delete settlements FIRST
         settleRepository.deleteAllByGroupId(groupId);
-
-        // 2️⃣ Delete expenses
         expenseRepository.deleteAll(expenseRepository.findAllByGroupId(groupId));
-
-        // 3️⃣ Clear join table group_users
         group.getUsers().clear();
         groupRepository.saveAndFlush(group);
-
-        // 4️⃣ Delete group
         groupRepository.delete(group);
     }
 
