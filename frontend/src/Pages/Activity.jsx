@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "../api/axiosClient";
 import PageLayout from "../components/PageLayout";
 import "./Styles/Activity.css";
+import { toast } from "react-toastify";
 
 export default function Activity() {
   const [activities, setActivities] = useState([]);
@@ -26,7 +27,6 @@ export default function Activity() {
 
         const activityRes = await axios.get(`/activity/user/${me.data.id}`);
         setActivities(activityRes.data);
-
       } catch (err) {
         if (err.response?.status === 401) {
           window.location.href = "/login";
@@ -36,26 +36,64 @@ export default function Activity() {
     loadUser();
   }, []);
 
+  const clearAllActivities = () => {
+    toast.info(
+      <div style={{ textAlign: "center" }}>
+        <p style={{ marginBottom: "10px" }}>Are you sure you want to clear all activity?</p>
 
-  // 👉 new function to clear all activities
-  const clearAllActivities = async () => {
-    if (!window.confirm("Are you sure you want to clear all activity?")) return;
+        <button
+          onClick={async () => {
+            try {
+              await axios.delete(`/activity/user/${userId}/clear`);
+              setActivities([]);
+              toast.dismiss();
+              toast.success("Activity cleared successfully");
+            } catch (err) {
+              toast.dismiss();
+              toast.error("Failed to clear activity");
+            }
+          }}
+          style={{
+            padding: "6px 12px",
+            marginRight: "8px",
+            backgroundColor: "#4CAF50",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          Yes
+        </button>
 
-    try {
-      await axios.delete(`/activity/user/${userId}/clear`);
-      setActivities([]); // update UI instantly
-    } catch (err) {
-      alert("Failed to clear activity");
-    }
+        <button
+          onClick={() => toast.dismiss()}
+          style={{
+            padding: "6px 12px",
+            backgroundColor: "#f44336",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          Cancel
+        </button>
+      </div>,
+      {
+        position: "top-center",
+        autoClose: false,
+        draggable: false,
+        closeOnClick: false,
+      }
+    );
   };
-
 
   return (
     <PageLayout username={username} menuItems={menuItems}>
       <div className="activity-container">
         <h2>Recent Activity</h2>
 
-        {/* ⭐ Clear Button (only show if activities exist) */}
         {activities.length > 0 && (
           <button className="clear-btn" onClick={clearAllActivities}>
             Clear All Activity
