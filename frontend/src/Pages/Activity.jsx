@@ -6,6 +6,7 @@ import "./Styles/Activity.css";
 export default function Activity() {
   const [activities, setActivities] = useState([]);
   const [username, setUsername] = useState("");
+  const [userId, setUserId] = useState(null);
 
   const menuItems = [
     { label: "Dashboard", icon: "🏠", path: "/dashboard" },
@@ -21,6 +22,7 @@ export default function Activity() {
       try {
         const me = await axios.get("/users/me");
         setUsername(me.data.username);
+        setUserId(me.data.id);
 
         const activityRes = await axios.get(`/activity/user/${me.data.id}`);
         setActivities(activityRes.data);
@@ -34,10 +36,31 @@ export default function Activity() {
     loadUser();
   }, []);
 
+
+  // 👉 new function to clear all activities
+  const clearAllActivities = async () => {
+    if (!window.confirm("Are you sure you want to clear all activity?")) return;
+
+    try {
+      await axios.delete(`/activity/user/${userId}/clear`);
+      setActivities([]); // update UI instantly
+    } catch (err) {
+      alert("Failed to clear activity");
+    }
+  };
+
+
   return (
     <PageLayout username={username} menuItems={menuItems}>
       <div className="activity-container">
         <h2>Recent Activity</h2>
+
+        {/* ⭐ Clear Button (only show if activities exist) */}
+        {activities.length > 0 && (
+          <button className="clear-btn" onClick={clearAllActivities}>
+            Clear All Activity
+          </button>
+        )}
 
         {activities.length === 0 ? (
           <p className="no-activity">No recent activity</p>
