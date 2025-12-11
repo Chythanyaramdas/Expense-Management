@@ -105,7 +105,7 @@ public class ExpenseService {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
 
-        List<User> members = group.getUsers(); // Current group members
+        List<User> members = group.getUsers();
         List<Expense> expenses = expenseRepository.findAllByGroupId(groupId);
 
         Map<Long, BigDecimal> balances = new HashMap<>();
