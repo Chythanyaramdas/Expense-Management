@@ -1,9 +1,13 @@
 FROM maven:3.8.5-openjdk-17 AS build
-COPY . .
+
+WORKDIR /app
+COPY backend/. .
 RUN mvn clean package -DskipTests
 
 FROM openjdk:17.0.1-jdk-slim
-COPY --from=build /target/project-0.0.1-SNAPSHOT.jar demo.jar
+COPY --from=build /app/target/project-0.0.1-SNAPSHOT.jar demo.jar
+
 EXPOSE 9090
 ENTRYPOINT ["java","-jar","demo.jar"]
+
 
